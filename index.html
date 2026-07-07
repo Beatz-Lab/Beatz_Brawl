@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Beatz Brawl V15</title>
+<title>Beatz Brawl V19</title>
 <style>
 :root{--blue:#31c8ff;--pink:#ff3ddb;--yellow:#ffe35a;--dark:#050914;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
@@ -54,6 +54,8 @@ tracks.fight.loop=true;tracks.fight.volume=0.36;tracks.fight.preload='auto';
 tracks.fightNightclub.loop=true;tracks.fightNightclub.volume=0.36;tracks.fightNightclub.preload='auto';
 tracks.fightOutside.loop=true;tracks.fightOutside.volume=0.36;tracks.fightOutside.preload='auto';
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
+// Mobile browsers are strict with audio. Set these early and explicitly load the files.
+Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsinline','');t.load();}catch(e){}});
 let activeTrack=null;
 const assets={};
 const files={
@@ -114,6 +116,10 @@ canvas.addEventListener('pointerdown',e=>{
   else if(gameState==='stage'){handleStagePointer(e);}
   else if(gameState==='fight' && roundOver){handleFightPointer(e);}
 });
+// Extra mobile-safe listeners for the title screen audio unlock.
+// Some phone browsers are happier when audio.play() happens directly inside touchstart/click.
+canvas.addEventListener('touchstart',e=>{if(gameState==='title')handleTitleInput(e);},{passive:false});
+canvas.addEventListener('click',e=>{if(gameState==='title')handleTitleInput(e);});
 
 function initAudio(startTrack=true){
   if(!audioCtx){
@@ -137,6 +143,18 @@ function playTrack(name){
   next.muted=false;
   if(next.paused)next.play().catch(()=>{});
 }
+function forcePlayTrack(name){
+  if(muted)return;
+  const next=tracks[name];
+  if(!next)return;
+  Object.values(tracks).forEach(t=>{if(t!==next)t.pause();});
+  activeTrack=next;
+  next.muted=false;
+  try{next.currentTime=0;}catch(e){}
+  const attempt=()=>next.play().catch(()=>{});
+  attempt();
+  setTimeout(()=>{if(gameState==='title'&&titleAudioReady&&!muted&&next.paused)attempt();},180);
+}
 function restartTrack(name){
   const t=tracks[name]; if(!t)return;
   try{t.currentTime=0;}catch(e){}
@@ -155,15 +173,17 @@ function toggleMute(){
 }
 function handleTitleInput(e){
   if(e) e.preventDefault();
-  initAudio(false);
   const now=performance.now();
+  // Avoid double-firing on phones where touchstart, pointerdown and click can all arrive together.
+  if(now<titleInputLock && titleAudioReady)return;
+  initAudio(false);
   if(!titleAudioReady){
     titleAudioReady=true;
     titleInputLock=now+650;
-    restartTrack('menu');
+    // Keep this direct call inside the first tap/key event so mobile browsers allow it.
+    forcePlayTrack('menu');
     return;
   }
-  if(now<titleInputLock)return;
   goSelect();
 }
 function tone(freq,dur=0.08,type='square',vol=0.16,delay=0){
@@ -283,11 +303,21 @@ const stages=[
 ];
 let selectedStage=0;
 function selectedStageImage(){return assets[stages[selectedStage].key]||assets.stage;}
+function canvasPoint(e){
+  const rect=canvas.getBoundingClientRect();
+  const cssW=rect.width, cssH=rect.height;
+  const scale=Math.min(cssW/W, cssH/H);
+  const drawW=W*scale, drawH=H*scale;
+  const offX=(cssW-drawW)/2, offY=(cssH-drawH)/2;
+  return {
+    x:(e.clientX-rect.left-offX)/scale,
+    y:(e.clientY-rect.top-offY)/scale
+  };
+}
 function handleStagePointer(e){
   initAudio(false);
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)*canvas.width/rect.width;
-  const y=(e.clientY-rect.top)*canvas.height/rect.height;
+  const p=canvasPoint(e);
+  const x=p.x, y=p.y;
   const cardW=250,cardH=150,gap=30,totalW=stages.length*cardW+(stages.length-1)*gap,startX=(W-totalW)/2,cardY=168;
   for(let i=0;i<stages.length;i++){
     const cx=startX+i*(cardW+gap);
@@ -359,9 +389,8 @@ function drawTitle(){
 }
 function handleSelectPointer(e){
   initAudio(false);
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)*canvas.width/rect.width;
-  const y=(e.clientY-rect.top)*canvas.height/rect.height;
+  const p=canvasPoint(e);
+  const x=p.x, y=p.y;
   const cardW=260,cardH=300,gap=36,totalW=characters.length*cardW+(characters.length-1)*gap,startX=(W-totalW)/2,cardY=130;
   for(let i=0;i<characters.length;i++){
     const cx=startX+i*(cardW+gap);
@@ -420,9 +449,8 @@ function drawStageSelect(){
 
 function handleFightPointer(e){
   if(!roundOver) return;
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)*canvas.width/rect.width;
-  const y=(e.clientY-rect.top)*canvas.height/rect.height;
+  const p=canvasPoint(e);
+  const x=p.x, y=p.y;
   if(x>=W/2-170&&x<=W/2+170&&y>=H/2+118&&y<=H/2+176) handleFightConfirm();
 }
 function drawOverlay(){
@@ -441,7 +469,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V15...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V16...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
