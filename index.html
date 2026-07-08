@@ -411,7 +411,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     beatz:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
     gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162},
     emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
-    paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:156,jump:162}
+    paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:158,special:195,jump:162}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh;if(f.action==='jump')dy=f.y-dh-14;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
