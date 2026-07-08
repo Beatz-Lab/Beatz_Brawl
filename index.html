@@ -73,14 +73,16 @@ const files={
  stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',title:'assets/ui/title_screen.png',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
- emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png'
+ emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
+ paige_stand:'assets/characters/paige/paige_stand.png',paige_walk:'assets/characters/paige/paige_walk.png',paige_punch:'assets/characters/paige/paige_punch.png',paige_kick:'assets/characters/paige/paige_kick.png',paige_block:'assets/characters/paige/paige_block.png',paige_crouch:'assets/characters/paige/paige_crouch.png',paige_special:'assets/characters/paige/paige_special.png',paige_jump:'assets/characters/paige/paige_jump.png'
 };
 const total=Object.keys(files).length;
 for(const [k,src] of Object.entries(files)){const img=new Image();img.onload=()=>loaded++;img.src=src;assets[k]=img;}
 const characters=[
   {id:'beatz',name:'BEATZ',specialName:'Bass Shockwave',effect:'blue',assetPrefix:'beatz'},
   {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'},
-  {id:'emma',name:'EMMA',specialName:'Purple Star Pirouette',effect:'stars',assetPrefix:'emma'}
+  {id:'emma',name:'EMMA',specialName:'Purple Star Pirouette',effect:'stars',assetPrefix:'emma'},
+  {id:'paige',name:'PAIGE',specialName:'Pink Power Rush',effect:'pink',assetPrefix:'paige'}
 ];
 let selectedFighter=0;
 function charAsset(f,action){return assets[characters[f.charId].assetPrefix+'_'+action]||assets[characters[f.charId].assetPrefix+'_stand'];}
@@ -408,7 +410,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   const spriteH={
     beatz:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
     gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162},
-    emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162}
+    emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
+    paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:156,jump:162}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh;if(f.action==='jump')dy=f.y-dh-14;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
@@ -435,6 +438,12 @@ function drawSpecialEffect(f){
       ctx.closePath();
       ctx.fillStyle=i%2?'rgba(255,218,63,.72)':'rgba(255,80,0,.70)';ctx.fill();
     }
+  }else if(ch.effect==='pink'){
+    ctx.globalAlpha=.95;ctx.shadowColor='#ff4fcf';ctx.shadowBlur=22;
+    ctx.strokeStyle='rgba(255,74,195,.95)';ctx.lineWidth=5;
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x,y+i*5-7);ctx.lineTo(x+f.facing*(70+i*35),y+i*8-11);ctx.stroke();}
+    ctx.fillStyle='rgba(255,155,230,.90)';
+    for(let i=0;i<8;i++){const sx=x+f.facing*(35+i*24),sy=y-18+Math.sin(Date.now()/75+i)*20;ctx.beginPath();ctx.arc(sx,sy,4+(i%3),0,Math.PI*2);ctx.fill();}
   }else{
     ctx.strokeStyle='rgba(49,200,255,.9)';ctx.lineWidth=4;ctx.shadowColor='#31c8ff';ctx.shadowBlur=14;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(x+f.facing*i*24,y,25+i*16,-0.95,0.95);ctx.stroke();}
   }
@@ -458,33 +467,41 @@ function handleSelectPointer(e){
   initAudio(false);
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
-  const cardW=260,cardH=300,gap=36,totalW=characters.length*cardW+(characters.length-1)*gap,startX=(W-totalW)/2,cardY=130;
-  for(let i=0;i<characters.length;i++){
-    const cx=startX+i*(cardW+gap);
-    if(x>=cx&&x<=cx+cardW&&y>=cardY&&y<=cardY+cardH){selectedFighter=i;return;}
-  }
-  if(x>=W/2-160&&x<=W/2+160&&y>=448&&y<=510) goStageSelect();
+  if(x>=54&&x<=154&&y>=220&&y<=338){selectedFighter=(selectedFighter+characters.length-1)%characters.length;return;}
+  if(x>=W-154&&x<=W-54&&y>=220&&y<=338){selectedFighter=(selectedFighter+1)%characters.length;return;}
+  if(x>=W/2-170&&x<=W/2+170&&y>=448&&y<=510) goStageSelect();
+  if(x>=W/2-190&&x<=W/2+190&&y>=118&&y<=430){return;}
 }
 function drawSelect(){
   drawStage();
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,.66)';ctx.fillRect(0,0,W,H);
-  ctx.textAlign='center';ctx.fillStyle='#ffe35a';ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;ctx.font='54px Impact';ctx.fillText('SELECT YOUR FIGHTER',W/2,76);
+  ctx.textAlign='center';ctx.fillStyle='#ffe35a';ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;ctx.font='54px Impact';ctx.fillText('SELECT YOUR FIGHTER',W/2,70);
   ctx.shadowBlur=0;
-  const cardW=260,cardH=300,gap=36,totalW=characters.length*cardW+(characters.length-1)*gap,startX=(W-totalW)/2,cardY=130;
-  for(let i=0;i<characters.length;i++){
-    const ch=characters[i], x=startX+i*(cardW+gap), y=cardY;
-    ctx.fillStyle='rgba(6,20,36,.90)';ctx.fillRect(x,y,cardW,cardH);
-    ctx.strokeStyle=i===selectedFighter?'#ffe35a':'#31c8ff';ctx.lineWidth=i===selectedFighter?5:3;ctx.shadowColor=i===selectedFighter?'#ffe35a':'#31c8ff';ctx.shadowBlur=i===selectedFighter?20:8;ctx.strokeRect(x,y,cardW,cardH);
-    ctx.shadowBlur=0;
-    const img=assets[ch.assetPrefix+'_stand'];
-    if(img&&img.width){const th=190,sc=th/img.height,dw=img.width*sc;ctx.drawImage(img,x+cardW/2-dw/2,y+24,dw,th);} 
-    ctx.fillStyle=i===selectedFighter?'#ffe35a':'#fff';ctx.font='34px Impact';ctx.fillText(ch.name,x+cardW/2,y+238);
-    ctx.font='15px Arial';ctx.fillStyle='#9dffca';ctx.fillText('Special: '+ch.specialName,x+cardW/2,y+266);
-    if(i===selectedFighter){ctx.fillStyle='#31c8ff';ctx.font='15px Arial';ctx.fillText('SELECTED',x+cardW/2,y+288);}
+  const ch=characters[selectedFighter];
+  const cardW=380,cardH=318,cardX=W/2-cardW/2,cardY=112;
+  // arrows
+  function arrowBox(x,dir){
+    ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#31c8ff';ctx.lineWidth=4;ctx.shadowColor='#31c8ff';ctx.shadowBlur=14;
+    ctx.fillRect(x,220,100,118);ctx.strokeRect(x,220,100,118);
+    ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='64px Impact';ctx.fillText(dir,x+50,300);
   }
+  arrowBox(54,'‹');arrowBox(W-154,'›');
+  // main card
+  ctx.fillStyle='rgba(6,20,36,.90)';ctx.fillRect(cardX,cardY,cardW,cardH);
+  ctx.strokeStyle='#ffe35a';ctx.lineWidth=5;ctx.shadowColor='#ffe35a';ctx.shadowBlur=22;ctx.strokeRect(cardX,cardY,cardW,cardH);
+  ctx.shadowBlur=0;
+  const img=assets[ch.assetPrefix+'_stand'];
+  if(img&&img.width){
+    const th=210,sc=th/img.height,dw=img.width*sc;
+    ctx.drawImage(img,W/2-dw/2,cardY+18,dw,th);
+  }
+  ctx.fillStyle='#ffe35a';ctx.font='42px Impact';ctx.fillText(ch.name,W/2,cardY+258);
+  ctx.font='17px Arial';ctx.fillStyle='#9dffca';ctx.fillText('Special: '+ch.specialName,W/2,cardY+286);
+  ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='15px Arial';ctx.fillText((selectedFighter+1)+' / '+characters.length,W/2,cardY+306);
+  // confirm
   ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#31c8ff';ctx.lineWidth=3;ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;
-  ctx.fillRect(W/2-160,448,320,62);ctx.strokeRect(W/2-160,448,320,62);
+  ctx.fillRect(W/2-170,448,340,62);ctx.strokeRect(W/2-170,448,340,62);
   ctx.fillStyle='#fff';ctx.font='34px Impact';ctx.fillText('CONFIRM',W/2,490);
   ctx.shadowBlur=0;
   ctx.restore();
