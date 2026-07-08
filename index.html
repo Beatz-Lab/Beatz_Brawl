@@ -72,13 +72,15 @@ const assets={};
 const files={
  stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',title:'assets/ui/title_screen.png',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
- gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png'
+ gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
+ emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png'
 };
 const total=Object.keys(files).length;
 for(const [k,src] of Object.entries(files)){const img=new Image();img.onload=()=>loaded++;img.src=src;assets[k]=img;}
 const characters=[
   {id:'beatz',name:'BEATZ',specialName:'Bass Shockwave',effect:'blue',assetPrefix:'beatz'},
-  {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'}
+  {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'},
+  {id:'emma',name:'EMMA',specialName:'Purple Star Pirouette',effect:'stars',assetPrefix:'emma'}
 ];
 let selectedFighter=0;
 function charAsset(f,action){return assets[characters[f.charId].assetPrefix+'_'+action]||assets[characters[f.charId].assetPrefix+'_stand'];}
@@ -259,7 +261,7 @@ function sfx(name){
 
 function fighter(x,charId,cpu=false){const baseName=characters[charId].name;return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0};}
 let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null; resetRound(false);
-function resetRound(){const cpuChar=selectedFighter===0?1:0;p1=fighter(245,selectedFighter,false);cpu=fighter(720,cpuChar,true);roundTime=99;roundOver=false;winner='';paused=false;keys['f']=keys['g']=keys['h']=false;if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}}
+function resetRound(){const cpuChar=(selectedFighter+1)%characters.length;p1=fighter(245,selectedFighter,false);cpu=fighter(720,cpuChar,true);roundTime=99;roundOver=false;winner='';paused=false;keys['f']=keys['g']=keys['h']=false;if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}}
 function goSelect(){gameState='select';titleAudioReady=false;initAudio(true);restartTrack('select');}
 function goStageSelect(){gameState='stage';initAudio(true);restartTrack('stage');}
 function startFight(){gameState='fight';startNewMatch();initAudio(true);restartTrack(currentFightTrack());}
@@ -405,7 +407,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   // These target heights keep upright actions from shrinking while still letting crouch/jump look correct.
   const spriteH={
     beatz:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
-    gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162}
+    gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162},
+    emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh;if(f.action==='jump')dy=f.y-dh-14;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
@@ -415,7 +418,13 @@ function drawSpecialEffect(f){
   const ch=characters[f.charId];
   ctx.save();
   let x=f.x+f.facing*112,y=f.y-105;
-  if(ch.effect==='fire'){
+  if(ch.effect==='stars'){
+    ctx.globalAlpha=.95;ctx.shadowColor='#b64dff';ctx.shadowBlur=18;
+    ctx.strokeStyle='rgba(198,91,255,.95)';ctx.lineWidth=4;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x,y+i*4-4);ctx.lineTo(x+f.facing*(70+i*38),y+i*7-8);ctx.stroke();}
+    ctx.fillStyle='rgba(226,180,255,.95)';
+    for(let i=0;i<7;i++){const sx=x+f.facing*(45+i*22),sy=y-20+Math.sin(Date.now()/80+i)*18;ctx.beginPath();ctx.moveTo(sx,sy-8);ctx.lineTo(sx+4,sy-2);ctx.lineTo(sx+11,sy);ctx.lineTo(sx+4,sy+2);ctx.lineTo(sx,sy+8);ctx.lineTo(sx-4,sy+2);ctx.lineTo(sx-11,sy);ctx.lineTo(sx-4,sy-2);ctx.closePath();ctx.fill();}
+  }else if(ch.effect==='fire'){
     ctx.globalAlpha=.95;ctx.shadowColor='#ff7a00';ctx.shadowBlur=18;
     for(let i=0;i<7;i++){
       ctx.beginPath();
