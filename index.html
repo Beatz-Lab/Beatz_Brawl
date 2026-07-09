@@ -266,7 +266,7 @@ function sfx(name){
   if(name==='ko'){tone(120,.16,'sawtooth',.18);tone(80,.22,'square',.16,.08);tone(45,.28,'triangle',.14,.2);if(!muted){const t=tracks[currentFightTrack()]; if(t){t.volume=0.20;setTimeout(()=>{t.volume=0.36;},900);}}}
 }
 
-function fighter(x,charId,cpu=false){const baseName=characters[charId].name;return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0};}
+function fighter(x,charId,cpu=false){const baseName=characters[charId].name;return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0};}
 let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null; resetRound(false);
 function resetRound(){const cpuChar=(selectedFighter+1)%characters.length;p1=fighter(245,selectedFighter,false);cpu=fighter(720,cpuChar,true);roundTime=99;roundOver=false;winner='';paused=false;keys['f']=keys['g']=keys['h']=false;if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}}
 function goSelect(){gameState='select';titleAudioReady=false;initAudio(true);restartTrack('select');}
@@ -328,7 +328,7 @@ function goTitle(){
 }
 function doAttack(att,def,type){if(att.cool>0||roundOver)return;att.action=type;att.timer=type==='special'?34:22;att.cool=type==='special'?58:30;if(type==='special'){att.specialCool=100;sfx('special');}setTimeout(()=>{if(roundOver)return;const box=attackBox(att,type),hb=hurtBox(def);if(intersects(box,hb)){if(type==='kick'&&(def.crouch||def.action==='crouch')){sfx('block');return;}let dmg=type==='special'?16:type==='kick'?10:7;const wasBlocked=!!def.block; if(wasBlocked)dmg=Math.ceil(dmg*.25);def.hp=Math.max(0,def.hp-dmg);def.vx=att.facing*(wasBlocked?3.2:7.5);def.hitFlash=12;sfx(wasBlocked?'block':type);if(def.hp<=0){finishRound(att===p1?'p1':'cpu');}}},type==='special'?180:105);}
 function update(dt){if(paused||roundOver)return;roundTime-=dt/1000;if(roundTime<=0){roundTime=0;finishRound(p1.hp>=cpu.hp?'p1':'cpu');}
-[p1,cpu].forEach(f=>{if(f.cool>0)f.cool--;if(f.specialCool>0)f.specialCool--;if(f.timer>0)f.timer--;if(f.hitFlash>0)f.hitFlash--;});
+[p1,cpu].forEach(f=>{if(f.cool>0)f.cool--;if(f.specialCool>0)f.specialCool--;if(f.timer>0)f.timer--;if(f.hitFlash>0)f.hitFlash--;if(f.aiGuardTimer>0)f.aiGuardTimer--;if(f.aiCrouchTimer>0)f.aiCrouchTimer--;});
 // Player input
 p1.block=!!keys['b'];p1.crouch=!!keys['s'];
 if(p1.onGround){
@@ -355,9 +355,38 @@ if(keys['w']&&p1.onGround&&!p1.block&&!p1.crouch){
   p1.timer=10;
 }
 if(keys['f'])doAttack(p1,cpu,'punch');if(keys['g'])doAttack(p1,cpu,'kick');if(keys['h']&&p1.specialCool<=0)doAttack(p1,cpu,'special');
-// CPU brain
-const dist=p1.x-cpu.x;cpu.facing=dist<0?-1:1;cpu.vx=0;cpu.block=false;cpu.crouch=false;
-if(Math.abs(dist)>108&&cpu.timer<=0)cpu.vx=Math.sign(dist)*2.25;else{if(Math.random()<0.023)doAttack(cpu,p1,Math.random()<.32?'kick':'punch');if(Math.random()<0.006&&cpu.specialCool<=0)doAttack(cpu,p1,'special');if(Math.random()<0.012)cpu.block=true;}
+// CPU brain - V28: tougher, but still beatable
+const dist=p1.x-cpu.x;
+const absDist=Math.abs(dist);
+cpu.facing=dist<0?-1:1;
+cpu.vx=0;
+cpu.block=cpu.aiGuardTimer>0;
+cpu.crouch=cpu.aiCrouchTimer>0;
+
+const playerAttack=(p1.action==='punch'||p1.action==='kick'||p1.action==='special')&&p1.timer>0;
+const close=absDist<=125;
+
+// Small reaction chances so the CPU sometimes defends instead of just eating every hit.
+// These are deliberately not 100%, otherwise it would feel psychic and annoying.
+if(close&&cpu.timer<=0&&!cpu.block&&!cpu.crouch&&playerAttack){
+  if(p1.action==='kick'&&Math.random()<0.020){
+    cpu.aiCrouchTimer=14; // duck under some high kicks
+  }else{
+    const reactChance=p1.action==='special'?0.030:(p1.action==='kick'?0.018:0.014);
+    if(Math.random()<reactChance)cpu.aiGuardTimer=14;
+  }
+}
+
+cpu.block=cpu.aiGuardTimer>0;
+cpu.crouch=cpu.aiCrouchTimer>0;
+
+if(absDist>108&&cpu.timer<=0&&!cpu.block&&!cpu.crouch){
+  cpu.vx=Math.sign(dist)*2.55;
+}else if(cpu.timer<=0&&!cpu.block&&!cpu.crouch){
+  if(Math.random()<0.048)doAttack(cpu,p1,Math.random()<.40?'kick':'punch');
+  if(Math.random()<0.012&&cpu.specialCool<=0)doAttack(cpu,p1,'special');
+  if(Math.random()<0.026)cpu.aiGuardTimer=12;
+}
 // face each other
 if(p1.x<cpu.x){p1.facing=1;cpu.facing=-1}else{p1.facing=-1;cpu.facing=1}
 [p1,cpu].forEach(f=>{f.x+=f.vx;f.y+=f.vy;if(!f.onGround)f.vy+=.68;if(f.y>=GROUND){f.y=GROUND;f.vy=0;f.onGround=true;}f.x=clamp(f.x,78,W-78);if(f.timer<=0){if(!f.onGround)f.action='jump';else if(f.block)f.action='block';else if(f.crouch)f.action='crouch';else if(Math.abs(f.vx)>0.15)f.action='walk';else f.action='stand';}});
@@ -589,7 +618,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V27...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V28...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
