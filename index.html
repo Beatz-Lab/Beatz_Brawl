@@ -8,6 +8,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Beatz Brawl</title>
+<!-- Beatz Brawl V36 AI difficulty patch -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#07162a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -349,7 +350,7 @@ function goTitle(){
   initAudio(true);
   restartTrack('menu');
 }
-function doAttack(att,def,type){if(att.cool>0||roundOver)return;att.action=type;att.timer=type==='special'?34:22;att.cool=type==='special'?58:30;if(type==='special'){att.specialCool=100;sfx('special');}setTimeout(()=>{if(roundOver)return;const box=attackBox(att,type),hb=hurtBox(def);if(intersects(box,hb)){if(type==='kick'&&(def.crouch||def.action==='crouch')){sfx('block');return;}let dmg=type==='special'?16:type==='kick'?10:7;const wasBlocked=!!def.block; if(wasBlocked)dmg=Math.ceil(dmg*.25);def.hp=Math.max(0,def.hp-dmg);def.vx=att.facing*(wasBlocked?3.2:7.5);def.hitFlash=12;sfx(wasBlocked?'block':type);if(def.hp<=0){finishRound(att===p1?'p1':'cpu');}}},type==='special'?180:105);}
+function doAttack(att,def,type){if(att.cool>0||roundOver)return;att.action=type;att.timer=type==='special'?34:22;att.cool=type==='special'?58:30;if(type==='special'){att.specialCool=100;sfx('special');}setTimeout(()=>{if(roundOver)return;const box=attackBox(att,type),hb=hurtBox(def);if(intersects(box,hb)){if(type==='kick'&&(def.crouch||def.action==='crouch')){sfx('block');return;}let dmg=type==='special'?16:type==='kick'?10:7;const wasBlocked=!!def.block; if(wasBlocked)dmg=Math.max(1,Math.ceil(dmg*.15));def.hp=Math.max(0,def.hp-dmg);def.vx=att.facing*(wasBlocked?3.2:7.5);def.hitFlash=12;sfx(wasBlocked?'block':type);if(def.hp<=0){finishRound(att===p1?'p1':'cpu');}}},type==='special'?180:105);}
 function update(dt){if(paused||roundOver)return;roundTime-=dt/1000;if(roundTime<=0){roundTime=0;finishRound(p1.hp>=cpu.hp?'p1':'cpu');}
 [p1,cpu].forEach(f=>{if(f.cool>0)f.cool--;if(f.specialCool>0)f.specialCool--;if(f.timer>0)f.timer--;if(f.hitFlash>0)f.hitFlash--;if(f.aiGuardTimer>0)f.aiGuardTimer--;if(f.aiCrouchTimer>0)f.aiCrouchTimer--;});
 // Player input
@@ -378,7 +379,7 @@ if(keys['w']&&p1.onGround&&!p1.block&&!p1.crouch){
   p1.timer=10;
 }
 if(keys['f'])doAttack(p1,cpu,'punch');if(keys['g'])doAttack(p1,cpu,'kick');if(keys['h']&&p1.specialCool<=0)doAttack(p1,cpu,'special');
-// CPU brain - V28: tougher, but still beatable
+// CPU brain - V36: harder defence/attack, still beatable
 const dist=p1.x-cpu.x;
 const absDist=Math.abs(dist);
 cpu.facing=dist<0?-1:1;
@@ -395,8 +396,8 @@ if(close&&cpu.timer<=0&&!cpu.block&&!cpu.crouch&&playerAttack){
   if(p1.action==='kick'&&Math.random()<0.020){
     cpu.aiCrouchTimer=14; // duck under some high kicks
   }else{
-    const reactChance=p1.action==='special'?0.030:(p1.action==='kick'?0.018:0.014);
-    if(Math.random()<reactChance)cpu.aiGuardTimer=14;
+    const reactChance=p1.action==='special'?0.050:(p1.action==='kick'?0.032:0.024);
+    if(Math.random()<reactChance)cpu.aiGuardTimer=16;
   }
 }
 
@@ -404,11 +405,11 @@ cpu.block=cpu.aiGuardTimer>0;
 cpu.crouch=cpu.aiCrouchTimer>0;
 
 if(absDist>108&&cpu.timer<=0&&!cpu.block&&!cpu.crouch){
-  cpu.vx=Math.sign(dist)*2.55;
+  cpu.vx=Math.sign(dist)*2.72;
 }else if(cpu.timer<=0&&!cpu.block&&!cpu.crouch){
-  if(Math.random()<0.048)doAttack(cpu,p1,Math.random()<.40?'kick':'punch');
-  if(Math.random()<0.012&&cpu.specialCool<=0)doAttack(cpu,p1,'special');
-  if(Math.random()<0.026)cpu.aiGuardTimer=12;
+  if(Math.random()<0.064)doAttack(cpu,p1,Math.random()<.45?'kick':'punch');
+  if(Math.random()<0.017&&cpu.specialCool<=0)doAttack(cpu,p1,'special');
+  if(Math.random()<0.040)cpu.aiGuardTimer=15;
 }
 // face each other
 if(p1.x<cpu.x){p1.facing=1;cpu.facing=-1}else{p1.facing=-1;cpu.facing=1}
@@ -716,7 +717,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V35...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V36...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
