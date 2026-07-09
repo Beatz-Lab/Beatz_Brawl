@@ -34,6 +34,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 .atk{width:96px;height:54px;font-size:13px}.punch{right:116px;top:8px}.kick{right:8px;top:8px}.block{right:116px;bottom:48px}.special{right:8px;bottom:48px}.pause{right:116px;bottom:0;width:96px;height:38px;font-size:12px}.mute{right:8px;bottom:0;width:96px;height:38px;font-size:12px}.pause,.mute{border-color:#ffe35acc;text-shadow:0 0 8px #ffe35a;box-shadow:0 0 18px #ffe35a55;background:#171006bb}.pause.pressed,.pause:active,.mute.pressed,.mute:active{background:#7a5200cc}
 @media (pointer:coarse),(max-width:800px){#mobileControls{display:block}canvas{width:100vw;height:100vh;object-fit:contain}.pad{transform:scale(.82);transform-origin:bottom left}.buttons{transform:scale(.82);transform-origin:bottom right}}
 </style>
+<!-- Beatz Brawl V35 - compact VS fight button -->
 </head>
 <body>
 <div id="wrap"><canvas id="game" width="960" height="540"></canvas></div>
@@ -613,7 +614,7 @@ function handleVsPointer(e){
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
   if(x>=30&&x<=170&&y>=450&&y<=510){goStageSelect();return;}
-  if(x>=W/2-170&&x<=W/2+170&&y>=450&&y<=512){startFight();return;}
+  if(x>=W/2-72&&x<=W/2+72&&y>=450&&y<=512){startFight();return;}
 }
 function drawVsCharacter(charIndex,x,baseY,flip=false,label='PLAYER'){
   const ch=characters[charIndex];
@@ -670,7 +671,7 @@ function drawVsScreen(){
   ctx.textAlign='center';ctx.font='96px Impact';ctx.fillStyle='#fff';ctx.shadowColor='#ff3ddb';ctx.shadowBlur=28;ctx.fillText('VS',0,0);
   ctx.shadowColor='#31c8ff';ctx.shadowBlur=14;ctx.strokeStyle='#31c8ff';ctx.lineWidth=2;ctx.strokeText('VS',0,0);
   ctx.restore();
-  drawMenuButton(W/2-170,450,340,62,'FIGHT!','#ffe35a');
+  drawMenuButton(W/2-72,450,144,62,'FIGHT!','#ffe35a');
   drawMenuButton(30,450,140,60,'BACK','#ff3ddb');
   ctx.restore();
 }
@@ -715,7 +716,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V33...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V35...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
