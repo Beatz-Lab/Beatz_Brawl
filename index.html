@@ -74,7 +74,8 @@ const files={
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
- paige_stand:'assets/characters/paige/paige_stand.png',paige_walk:'assets/characters/paige/paige_walk.png',paige_punch:'assets/characters/paige/paige_punch.png',paige_kick:'assets/characters/paige/paige_kick.png',paige_block:'assets/characters/paige/paige_block.png',paige_crouch:'assets/characters/paige/paige_crouch.png',paige_special:'assets/characters/paige/paige_special.png',paige_jump:'assets/characters/paige/paige_jump.png'
+ paige_stand:'assets/characters/paige/paige_stand.png',paige_walk:'assets/characters/paige/paige_walk.png',paige_punch:'assets/characters/paige/paige_punch.png',paige_kick:'assets/characters/paige/paige_kick.png',paige_block:'assets/characters/paige/paige_block.png',paige_crouch:'assets/characters/paige/paige_crouch.png',paige_special:'assets/characters/paige/paige_special.png',paige_jump:'assets/characters/paige/paige_jump.png',
+ lem_stand:'assets/characters/lem/lem_stand.png',lem_walk:'assets/characters/lem/lem_walk.png',lem_punch:'assets/characters/lem/lem_punch.png',lem_kick:'assets/characters/lem/lem_kick.png',lem_block:'assets/characters/lem/lem_block.png',lem_crouch:'assets/characters/lem/lem_crouch.png',lem_special:'assets/characters/lem/lem_special.png',lem_jump:'assets/characters/lem/lem_jump.png'
 };
 const total=Object.keys(files).length;
 for(const [k,src] of Object.entries(files)){const img=new Image();img.onload=()=>loaded++;img.src=src;assets[k]=img;}
@@ -82,7 +83,8 @@ const characters=[
   {id:'beatz',name:'BEATZ',specialName:'Bass Shockwave',effect:'blue',assetPrefix:'beatz'},
   {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'},
   {id:'emma',name:'EMMA',specialName:'Purple Star Pirouette',effect:'stars',assetPrefix:'emma'},
-  {id:'paige',name:'PAIGE',specialName:'Pink Power Rush',effect:'pink',assetPrefix:'paige'}
+  {id:'paige',name:'PAIGE',specialName:'Pink Power Rush',effect:'pink',assetPrefix:'paige'},
+  {id:'lem',name:'LEM',specialName:'Pink Spotlight Burst',effect:'lem',assetPrefix:'lem'}
 ];
 let selectedFighter=0;
 function charAsset(f,action){return assets[characters[f.charId].assetPrefix+'_'+action]||assets[characters[f.charId].assetPrefix+'_stand'];}
@@ -103,12 +105,14 @@ window.addEventListener('keydown',e=>{
     return;
   }
   if(gameState==='stage'){
+    if(k==='escape'||k==='backspace'){goSelect();e.preventDefault();return;}
     if(k==='arrowleft'||k==='a'){selectedStage=(selectedStage+stages.length-1)%stages.length;e.preventDefault();return;}
     if(k==='arrowright'||k==='d'){selectedStage=(selectedStage+1)%stages.length;e.preventDefault();return;}
     if(k==='enter'||k===' '){startFight();e.preventDefault();return;}
     return;
   }
   if(gameState!=='fight'){return;}
+  if(paused && k==='escape'){goTitle();e.preventDefault();return;}
   if(roundOver && (k==='enter'||k===' ')){handleFightConfirm();e.preventDefault();return;}
   setKey(k,true);
   if(k==='p'){paused=!paused;if(paused)pauseAllMusic();else if(!muted)playTrack(currentFightTrack());}
@@ -155,6 +159,7 @@ canvas.addEventListener('pointerdown',e=>{
   if(gameState==='title'){handleTitleInput(e);}
   else if(gameState==='select'){handleSelectPointer(e);}
   else if(gameState==='stage'){handleStagePointer(e);}
+  else if(gameState==='fight' && paused){handlePausePointer(e);}
   else if(gameState==='fight' && roundOver){handleFightPointer(e);}
 });
 // Extra mobile-safe listeners for the title screen audio unlock.
@@ -380,6 +385,7 @@ function handleStagePointer(e){
   initAudio(false);
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
+  if(x>=30&&x<=170&&y>=450&&y<=510){goSelect();return;}
   const cardW=250,cardH=150,gap=30,totalW=stages.length*cardW+(stages.length-1)*gap,startX=(W-totalW)/2,cardY=168;
   for(let i=0;i<stages.length;i++){
     const cx=startX+i*(cardW+gap);
@@ -411,7 +417,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     beatz:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
     gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162},
     emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
-    paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:158,special:195,jump:162}
+    paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:158,special:195,jump:162},
+    lem:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:178,jump:162}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh;if(f.action==='jump')dy=f.y-dh-14;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
@@ -444,6 +451,12 @@ function drawSpecialEffect(f){
     for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x,y+i*5-7);ctx.lineTo(x+f.facing*(70+i*35),y+i*8-11);ctx.stroke();}
     ctx.fillStyle='rgba(255,155,230,.90)';
     for(let i=0;i<8;i++){const sx=x+f.facing*(35+i*24),sy=y-18+Math.sin(Date.now()/75+i)*20;ctx.beginPath();ctx.arc(sx,sy,4+(i%3),0,Math.PI*2);ctx.fill();}
+  }else if(ch.effect==='lem'){
+    ctx.globalAlpha=.95;ctx.shadowColor='#ff6fdc';ctx.shadowBlur=22;
+    ctx.strokeStyle='rgba(255,110,220,.95)';ctx.lineWidth=5;
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x,y+i*5-8);ctx.bezierCurveTo(x+f.facing*(38+i*18),y-28+i*6,x+f.facing*(85+i*28),y+18-i*7,x+f.facing*(130+i*22),y+i*3-8);ctx.stroke();}
+    ctx.fillStyle='rgba(255,245,255,.92)';
+    for(let i=0;i<9;i++){const sx=x+f.facing*(34+i*24),sy=y-20+Math.sin(Date.now()/75+i)*20;ctx.beginPath();ctx.arc(sx,sy,3+(i%3),0,Math.PI*2);ctx.fill();}
   }else{
     ctx.strokeStyle='rgba(49,200,255,.9)';ctx.lineWidth=4;ctx.shadowColor='#31c8ff';ctx.shadowBlur=14;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(x+f.facing*i*24,y,25+i*16,-0.95,0.95);ctx.stroke();}
   }
@@ -528,7 +541,30 @@ function drawStageSelect(){
   ctx.fillRect(W/2-160,430,320,62);ctx.strokeRect(W/2-160,430,320,62);
   ctx.fillStyle='#fff';ctx.font='34px Impact';ctx.fillText('CONFIRM',W/2,472);
   ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#ff3ddb';ctx.lineWidth=3;ctx.shadowColor='#ff3ddb';ctx.shadowBlur=14;
+  ctx.fillRect(30,450,140,60);ctx.strokeRect(30,450,140,60);
+  ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText('BACK',100,490);
+  ctx.shadowBlur=0;
   ctx.restore();
+}
+
+
+function handlePausePointer(e){
+  const p=canvasPoint(e);
+  const x=p.x, y=p.y;
+  if(x>=W/2-170&&x<=W/2+170&&y>=H/2+44&&y<=H/2+102){paused=false;if(!muted)playTrack(currentFightTrack());return;}
+  if(x>=W/2-170&&x<=W/2+170&&y>=H/2+118&&y<=H/2+176){goTitle();return;}
+}
+function drawPauseMenu(){
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#31c8ff';ctx.shadowBlur=15;ctx.font='58px Impact';ctx.fillText('PAUSED',W/2,H/2-28);ctx.shadowBlur=0;
+  drawMenuButton(W/2-170,H/2+44,340,58,'RESUME','#31c8ff');
+  drawMenuButton(W/2-170,H/2+118,340,58,'RETURN TO MENU','#ff3ddb');
+  ctx.restore();
+}
+function drawMenuButton(x,y,w,h,label,colour){
+  ctx.save();ctx.textAlign='center';ctx.fillStyle='rgba(6,20,36,.94)';ctx.strokeStyle=colour;ctx.lineWidth=3;ctx.shadowColor=colour;ctx.shadowBlur=16;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,x+w/2,y+38);ctx.restore();
 }
 
 function handleFightPointer(e){
@@ -538,7 +574,7 @@ function handleFightPointer(e){
   if(x>=W/2-170&&x<=W/2+170&&y>=H/2+118&&y<=H/2+176) handleFightConfirm();
 }
 function drawOverlay(){
-  if(paused)message('PAUSED');
+  if(paused){drawPauseMenu();return;}
   if(roundOver){
     if(matchOver) message(winner);
     else message(winner);
@@ -553,7 +589,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V22...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V27...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
