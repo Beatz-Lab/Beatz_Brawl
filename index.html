@@ -57,6 +57,8 @@ const tracks={
   fight:new Audio('assets/audio/fight_theme.mp3'),
   fightNightclub:new Audio('assets/audio/fight_nightclub.mp3'),
   fightOutside:new Audio('assets/audio/fight_outside_hall.mp3'),
+  fightCoventry:new Audio('assets/audio/fight_coventry_transport.mp3'),
+  fightWembley:new Audio('assets/audio/fight_wembley_night.mp3'),
   stage:new Audio('assets/audio/stage_select_theme.mp3')
 };
 tracks.menu.loop=true;tracks.menu.volume=0.46;tracks.menu.preload='auto';
@@ -64,13 +66,15 @@ tracks.select.loop=true;tracks.select.volume=0.46;tracks.select.preload='auto';
 tracks.fight.loop=true;tracks.fight.volume=0.36;tracks.fight.preload='auto';
 tracks.fightNightclub.loop=true;tracks.fightNightclub.volume=0.36;tracks.fightNightclub.preload='auto';
 tracks.fightOutside.loop=true;tracks.fightOutside.volume=0.36;tracks.fightOutside.preload='auto';
+tracks.fightCoventry.loop=true;tracks.fightCoventry.volume=0.36;tracks.fightCoventry.preload='auto';
+tracks.fightWembley.loop=true;tracks.fightWembley.volume=0.36;tracks.fightWembley.preload='auto';
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
 // Mobile browsers are strict with audio. Set these early and explicitly load the files.
 Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsinline','');t.load();}catch(e){}});
 let activeTrack=null;
 const assets={};
 const files={
- stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',title:'assets/ui/title_screen.png',
+ stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',title:'assets/ui/title_screen.png',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
@@ -278,9 +282,8 @@ function attackBox(f,type){const range=type==='special'?175:type==='kick'?108:86
 function intersects(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 
 function currentFightTrack(){
-  if(selectedStage===0) return 'fightNightclub';
-  if(selectedStage===1) return 'fightOutside';
-  return 'fight';
+  const st=stages[selectedStage];
+  return (st&&st.track)||'fight';
 }
 function startNewMatch(){
   p1Rounds=0;
@@ -393,9 +396,11 @@ if(p1.x<cpu.x){p1.facing=1;cpu.facing=-1}else{p1.facing=-1;cpu.facing=1}
 }
 
 const stages=[
-  {name:'NIGHTCLUB', key:'stageNightclub'},
-  {name:'OUTSIDE HALL', key:'stageOutside'},
-  {name:'ROOFTOP', key:'stage'}
+  {name:'NIGHTCLUB', key:'stageNightclub', track:'fightNightclub'},
+  {name:'OUTSIDE HALL', key:'stageOutside', track:'fightOutside'},
+  {name:'ROOFTOP', key:'stage', track:'fight'},
+  {name:'TRANSPORT MUSEUM', key:'stageCoventry', track:'fightCoventry'},
+  {name:'WEMBLEY NIGHT', key:'stageWembley', track:'fightWembley'}
 ];
 let selectedStage=0;
 function selectedStageImage(){return assets[stages[selectedStage].key]||assets.stage;}
@@ -415,12 +420,10 @@ function handleStagePointer(e){
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
   if(x>=30&&x<=170&&y>=450&&y<=510){goSelect();return;}
-  const cardW=250,cardH=150,gap=30,totalW=stages.length*cardW+(stages.length-1)*gap,startX=(W-totalW)/2,cardY=168;
-  for(let i=0;i<stages.length;i++){
-    const cx=startX+i*(cardW+gap);
-    if(x>=cx&&x<=cx+cardW&&y>=cardY&&y<=cardY+cardH){selectedStage=i;return;}
-  }
-  if(x>=W/2-160&&x<=W/2+160&&y>=430&&y<=492) startFight();
+  if(x>=54&&x<=154&&y>=220&&y<=338){selectedStage=(selectedStage+stages.length-1)%stages.length;return;}
+  if(x>=W-154&&x<=W-54&&y>=220&&y<=338){selectedStage=(selectedStage+1)%stages.length;return;}
+  if(x>=W/2-160&&x<=W/2+160&&y>=430&&y<=492){startFight();return;}
+  if(x>=W/2-260&&x<=W/2+260&&y>=132&&y<=392){startFight();return;}
 }
 
 function drawStage(){ctx.drawImage(selectedStageImage(),0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,0,0,.03)');g.addColorStop(1,'rgba(0,0,0,.15)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
@@ -550,26 +553,34 @@ function drawSelect(){
 }
 
 function drawStageSelect(){
-  const bg=assets.stageNightclub&&assets.stageNightclub.width?assets.stageNightclub:assets.stage;
+  const bg=assets[stages[selectedStage].key]&&assets[stages[selectedStage].key].width?assets[stages[selectedStage].key]:assets.stageNightclub;
   ctx.drawImage(bg,0,0,W,H);
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,.70)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';ctx.fillStyle='#ff3ddb';ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;ctx.font='58px Impact';ctx.fillText('STAGE SELECT',W/2,76);
   ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='19px Arial';ctx.fillText('Choose your arena',W/2,108);
-  const cardW=250,cardH=150,gap=30,totalW=stages.length*cardW+(stages.length-1)*gap,startX=(W-totalW)/2,cardY=168;
-  for(let i=0;i<stages.length;i++){
-    const st=stages[i],img=assets[st.key],x=startX+i*(cardW+gap),y=cardY;
-    ctx.fillStyle='rgba(5,12,25,.86)';ctx.fillRect(x-8,y-8,cardW+16,cardH+78);
-    ctx.strokeStyle=i===selectedStage?'#ffe35a':'#566070';ctx.lineWidth=i===selectedStage?5:2;ctx.shadowColor=i===selectedStage?'#ffe35a':'transparent';ctx.shadowBlur=i===selectedStage?18:0;ctx.strokeRect(x-8,y-8,cardW+16,cardH+78);
-    ctx.shadowBlur=0;
-    if(img&&img.width) ctx.drawImage(img,x,y,cardW,cardH);
-    ctx.fillStyle=i===selectedStage?'#ffe35a':'#fff';ctx.font='28px Impact';ctx.fillText(st.name,x+cardW/2,y+cardH+43);
-    if(i===selectedStage){ctx.fillStyle='#31c8ff';ctx.font='15px Arial';ctx.fillText('SELECTED',x+cardW/2,y+cardH+64);}
+
+  function arrowBox(x,dir){
+    ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#31c8ff';ctx.lineWidth=4;ctx.shadowColor='#31c8ff';ctx.shadowBlur=14;
+    ctx.fillRect(x,220,100,118);ctx.strokeRect(x,220,100,118);
+    ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='64px Impact';ctx.fillText(dir,x+50,300);
   }
+  arrowBox(54,'‹');arrowBox(W-154,'›');
+
+  const st=stages[selectedStage], img=assets[st.key];
+  const cardW=520,cardH=260,cardX=W/2-cardW/2,cardY=132;
+  ctx.fillStyle='rgba(5,12,25,.88)';ctx.fillRect(cardX-10,cardY-10,cardW+20,cardH+66);
+  ctx.strokeStyle='#ffe35a';ctx.lineWidth=5;ctx.shadowColor='#ffe35a';ctx.shadowBlur=22;ctx.strokeRect(cardX-10,cardY-10,cardW+20,cardH+66);
+  ctx.shadowBlur=0;
+  if(img&&img.width) ctx.drawImage(img,cardX,cardY,cardW,cardH);
+  ctx.fillStyle='#ffe35a';ctx.font='38px Impact';ctx.fillText(st.name,W/2,cardY+cardH+44);
+  ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='15px Arial';ctx.fillText((selectedStage+1)+' / '+stages.length,W/2,cardY+cardH+64);
+
   ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#31c8ff';ctx.lineWidth=3;ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;
   ctx.fillRect(W/2-160,430,320,62);ctx.strokeRect(W/2-160,430,320,62);
   ctx.fillStyle='#fff';ctx.font='34px Impact';ctx.fillText('CONFIRM',W/2,472);
   ctx.shadowBlur=0;
+
   ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#ff3ddb';ctx.lineWidth=3;ctx.shadowColor='#ff3ddb';ctx.shadowBlur=14;
   ctx.fillRect(30,450,140,60);ctx.strokeRect(30,450,140,60);
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText('BACK',100,490);
