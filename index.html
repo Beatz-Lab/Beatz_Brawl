@@ -1,6 +1,8 @@
+<!-- Beatz Brawl V32 pause menu vertical restore -->
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Beatz Brawl V31 mobile button spacing refresh -->
 <!-- Beatz Brawl V29 cache refresh - upload this as index.html -->
 
 <meta charset="utf-8" />
@@ -29,7 +31,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 .btn{position:absolute;border:2px solid #58d7ff99;background:#061424aa;color:white;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-weight:900;text-shadow:0 0 8px #00aeff;box-shadow:0 0 18px #00aeff44;backdrop-filter:blur(2px);}
 .btn.pressed,.btn:active{background:#159ee0cc;transform:scale(.96)}
 .d{width:60px;height:60px;font-size:24px}.up-left{left:0;top:0}.up{left:66px;top:0}.up-right{right:0;top:0}.dir-down{left:66px;bottom:0}.left{left:0;top:66px}.right{right:0;top:66px}
-.atk{width:96px;height:54px;font-size:13px}.punch{right:116px;top:8px}.kick{right:8px;top:8px}.block{right:116px;bottom:48px}.special{right:8px;bottom:48px}.pause{right:82px;bottom:0;width:82px;height:38px;font-size:12px}.mute{right:82px;bottom:-44px;width:82px;height:38px;font-size:12px}
+.atk{width:96px;height:54px;font-size:13px}.punch{right:116px;top:8px}.kick{right:8px;top:8px}.block{right:116px;bottom:48px}.special{right:8px;bottom:48px}.pause{right:116px;bottom:0;width:96px;height:38px;font-size:12px}.mute{right:8px;bottom:0;width:96px;height:38px;font-size:12px}.pause,.mute{border-color:#ffe35acc;text-shadow:0 0 8px #ffe35a;box-shadow:0 0 18px #ffe35a55;background:#171006bb}.pause.pressed,.pause:active,.mute.pressed,.mute:active{background:#7a5200cc}
 @media (pointer:coarse),(max-width:800px){#mobileControls{display:block}canvas{width:100vw;height:100vh;object-fit:contain}.pad{transform:scale(.82);transform-origin:bottom left}.buttons{transform:scale(.82);transform-origin:bottom right}}
 </style>
 </head>
@@ -424,7 +426,7 @@ function handleStagePointer(e){
   if(x>=30&&x<=170&&y>=450&&y<=510){goSelect();return;}
   if(x>=54&&x<=154&&y>=220&&y<=338){selectedStage=(selectedStage+stages.length-1)%stages.length;return;}
   if(x>=W-154&&x<=W-54&&y>=220&&y<=338){selectedStage=(selectedStage+1)%stages.length;return;}
-  if(x>=W/2-160&&x<=W/2+160&&y>=430&&y<=492){startFight();return;}
+  if(x>=W/2-160&&x<=W/2+160&&y>=450&&y<=510){startFight();return;}
   if(x>=W/2-260&&x<=W/2+260&&y>=132&&y<=392){startFight();return;}
 }
 
@@ -579,8 +581,8 @@ function drawStageSelect(){
   ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='15px Arial';ctx.fillText((selectedStage+1)+' / '+stages.length,W/2,cardY+cardH+64);
 
   ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#31c8ff';ctx.lineWidth=3;ctx.shadowColor='#31c8ff';ctx.shadowBlur=16;
-  ctx.fillRect(W/2-160,430,320,62);ctx.strokeRect(W/2-160,430,320,62);
-  ctx.fillStyle='#fff';ctx.font='34px Impact';ctx.fillText('CONFIRM',W/2,472);
+  ctx.fillRect(W/2-160,450,320,60);ctx.strokeRect(W/2-160,450,320,60);
+  ctx.fillStyle='#fff';ctx.font='32px Impact';ctx.fillText('CONFIRM',W/2,490);
   ctx.shadowBlur=0;
 
   ctx.fillStyle='rgba(6,20,36,.92)';ctx.strokeStyle='#ff3ddb';ctx.lineWidth=3;ctx.shadowColor='#ff3ddb';ctx.shadowBlur=14;
@@ -594,19 +596,19 @@ function drawStageSelect(){
 function handlePausePointer(e){
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
-  if(x>=W/2-170&&x<=W/2+170&&y>=H/2+44&&y<=H/2+102){paused=false;if(!muted)playTrack(currentFightTrack());return;}
-  if(x>=W/2-170&&x<=W/2+170&&y>=H/2+118&&y<=H/2+176){goTitle();return;}
+  if(x>=W/2-165&&x<=W/2+165&&y>=H/2+62&&y<=H/2+120){paused=false;if(!muted)playTrack(currentFightTrack());return;}
+  if(x>=W/2-165&&x<=W/2+165&&y>=H/2+138&&y<=H/2+196){goTitle();return;}
 }
 function drawPauseMenu(){
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#31c8ff';ctx.shadowBlur=15;ctx.font='58px Impact';ctx.fillText('PAUSED',W/2,H/2-28);ctx.shadowBlur=0;
-  drawMenuButton(W/2-170,H/2+44,340,58,'RESUME','#31c8ff');
-  drawMenuButton(W/2-170,H/2+118,340,58,'RETURN TO MENU','#ff3ddb');
+  drawMenuButton(W/2-165,H/2+62,330,58,'RESUME','#31c8ff');
+  drawMenuButton(W/2-165,H/2+138,330,58,'RETURN TO MENU','#ff3ddb');
   ctx.restore();
 }
 function drawMenuButton(x,y,w,h,label,colour){
-  ctx.save();ctx.textAlign='center';ctx.fillStyle='rgba(6,20,36,.94)';ctx.strokeStyle=colour;ctx.lineWidth=3;ctx.shadowColor=colour;ctx.shadowBlur=16;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,x+w/2,y+38);ctx.restore();
+  ctx.save();ctx.textAlign='center';ctx.fillStyle='rgba(6,20,36,.94)';ctx.strokeStyle=colour;ctx.lineWidth=3;ctx.shadowColor=colour;ctx.shadowBlur=16;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font=(label.length>10?'25px Impact':'30px Impact');ctx.fillText(label,x+w/2,y+38);ctx.restore();
 }
 
 function handleFightPointer(e){
@@ -631,7 +633,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V28...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V31...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
