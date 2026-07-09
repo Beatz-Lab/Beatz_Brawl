@@ -8,6 +8,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Beatz Brawl</title>
+<!-- V38 reset Beatz pose scaling / anchor prep -->
 <!-- Beatz Brawl V36 AI difficulty patch -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#07162a">
@@ -36,6 +37,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 @media (pointer:coarse),(max-width:800px){#mobileControls{display:block}canvas{width:100vw;height:100vh;object-fit:contain}.pad{transform:scale(.82);transform-origin:bottom left}.buttons{transform:scale(.82);transform-origin:bottom right}}
 </style>
 <!-- Beatz Brawl V35 - compact VS fight button -->
+<!-- Beatz Brawl V39: normalised Beatz sprite anchors -->
 </head>
 <body>
 <div id="wrap"><canvas id="game" width="960" height="540"></canvas></div>
@@ -467,7 +469,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   // Each character's generated PNGs have slightly different internal scale.
   // These target heights keep upright actions from shrinking while still letting crouch/jump look correct.
   const spriteH={
-    beatz:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
+    beatz:{stand:152,walk:152,punch:152,kick:152,block:152,crouch:108,special:152,jump:137},
     gary:{stand:178,walk:176,punch:178,kick:170,block:168,crouch:132,special:178,jump:162},
     emma:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:126,special:148,jump:162},
     paige:{stand:178,walk:176,punch:170,kick:168,block:148,crouch:158,special:195,jump:162},
