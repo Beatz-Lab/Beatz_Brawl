@@ -38,7 +38,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 </style>
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
-<!-- Beatz Brawl V55: all character pose heights +25 again -->
+<!-- Beatz Brawl V56: Quick Match + saved Tournament mode -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -59,7 +59,8 @@ ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
 const keys={};let paused=false,roundOver=false,winner='',roundTime=99,last=0,loaded=0;
 let muted=false,audioCtx=null,musicStarted=false;
-let gameState="title"; // title -> select -> stage -> vs -> fight
+let gameState="title"; // title -> mode -> select/stage/vs/tournamentLadder -> fight
+let currentMode="quick"; // quick | tournament
 let titleAudioReady=false, titleInputLock=0;
 const SFX_BOOST=1.2;
 const SPECIAL_COOLDOWN_MAX=120;
@@ -109,6 +110,48 @@ const characters=[
 ];
 let selectedFighter=0;
 let selectedEnemy=1;
+const TOURNAMENT_SAVE_KEY='beatzBrawlTournamentV1';
+let tournament=null;
+function shuffle(arr){
+  const out=[...arr];
+  for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}
+  return out;
+}
+function validTournament(t){
+  return !!(t&&t.active&&Number.isInteger(t.selectedFighter)&&Array.isArray(t.opponents)&&Array.isArray(t.stages)&&Number.isInteger(t.currentRound)&&t.opponents.length&&t.opponents.length===t.stages.length&&t.currentRound>=0&&t.currentRound<t.opponents.length);
+}
+function loadTournament(){
+  try{const t=JSON.parse(localStorage.getItem(TOURNAMENT_SAVE_KEY)||'null');return validTournament(t)?t:null;}catch(e){return null;}
+}
+function saveTournament(){
+  if(tournament&&tournament.active){try{localStorage.setItem(TOURNAMENT_SAVE_KEY,JSON.stringify(tournament));}catch(e){}}
+}
+function clearTournament(){
+  tournament=null;
+  try{localStorage.removeItem(TOURNAMENT_SAVE_KEY);}catch(e){}
+}
+function buildTournament(){
+  const opponents=shuffle(characters.map((_,i)=>i).filter(i=>i!==selectedFighter));
+  const stageOrder=shuffle(stages.map((_,i)=>i));
+  const fightCount=Math.min(opponents.length,stageOrder.length);
+  tournament={active:true,selectedFighter,opponents:opponents.slice(0,fightCount),stages:stageOrder.slice(0,fightCount),currentRound:0};
+  saveTournament();
+  openTournamentLadder();
+}
+function continueTournament(){
+  const saved=loadTournament();
+  if(!saved)return;
+  tournament=saved;currentMode='tournament';selectedFighter=tournament.selectedFighter;
+  openTournamentLadder();
+}
+function openTournamentLadder(){
+  if(!validTournament(tournament)){goModeMenu();return;}
+  selectedFighter=tournament.selectedFighter;
+  selectedEnemy=tournament.opponents[tournament.currentRound];
+  selectedStage=tournament.stages[tournament.currentRound];
+  gameState='tournamentLadder';
+  initAudio(true);restartTrack('vs');
+}
 function charAsset(f,action){return assets[characters[f.charId].assetPrefix+'_'+action]||assets[characters[f.charId].assetPrefix+'_stand'];}
 
 function setKey(k,val){keys[k]=val;}
@@ -120,10 +163,22 @@ window.addEventListener('keydown',e=>{
     return;
   }
   initAudio(false);
+  if(gameState==='mode'){
+    if(k==='1'||k==='q'){startQuickMatch();e.preventDefault();return;}
+    if(k==='2'||k==='t'){requestNewTournament();e.preventDefault();return;}
+    if((k==='3'||k==='c')&&loadTournament()){continueTournament();e.preventDefault();return;}
+    return;
+  }
+  if(gameState==='confirmNew'){
+    if(k==='escape'||k==='backspace'){goModeMenu();e.preventDefault();return;}
+    if(k==='enter'||k===' '){clearTournament();startTournamentSelect();e.preventDefault();return;}
+    return;
+  }
   if(gameState==='select'){
+    if(k==='escape'||k==='backspace'){goModeMenu();e.preventDefault();return;}
     if(k==='arrowleft'||k==='a'){selectedFighter=(selectedFighter+characters.length-1)%characters.length;e.preventDefault();return;}
     if(k==='arrowright'||k==='d'){selectedFighter=(selectedFighter+1)%characters.length;e.preventDefault();return;}
-    if(k==='enter'||k===' '){goStageSelect(); e.preventDefault(); return;}
+    if(k==='enter'||k===' '){confirmFighterSelection(); e.preventDefault(); return;}
     return;
   }
   if(gameState==='stage'){
@@ -136,6 +191,15 @@ window.addEventListener('keydown',e=>{
   if(gameState==='vs'){
     if(k==='escape'||k==='backspace'){goStageSelect();e.preventDefault();return;}
     if(k==='enter'||k===' '){startFight();e.preventDefault();return;}
+    return;
+  }
+  if(gameState==='tournamentLadder'){
+    if(k==='escape'||k==='backspace'){goTitle();e.preventDefault();return;}
+    if(k==='enter'||k===' '){startFight();e.preventDefault();return;}
+    return;
+  }
+  if(gameState==='tournamentWin'||gameState==='tournamentOver'){
+    if(k==='enter'||k===' '||k==='escape'){goTitle();e.preventDefault();return;}
     return;
   }
   if(gameState!=='fight'){return;}
@@ -185,9 +249,13 @@ document.querySelectorAll('.btn').forEach(el=>{
 });
 canvas.addEventListener('pointerdown',e=>{
   if(gameState==='title'){handleTitleInput(e);}
+  else if(gameState==='mode'){handleModePointer(e);}
+  else if(gameState==='confirmNew'){handleConfirmNewPointer(e);}
   else if(gameState==='select'){handleSelectPointer(e);}
   else if(gameState==='stage'){handleStagePointer(e);}
   else if(gameState==='vs'){handleVsPointer(e);}
+  else if(gameState==='tournamentLadder'){handleTournamentPointer(e);}
+  else if(gameState==='tournamentWin'||gameState==='tournamentOver'){handleTournamentEndPointer(e);}
   else if(gameState==='fight' && paused){handlePausePointer(e);}
   else if(gameState==='fight' && roundOver){handleFightPointer(e);}
 });
@@ -202,10 +270,10 @@ function initAudio(startTrack=true){
   }
   if(audioCtx.state==='suspended') audioCtx.resume();
   if(startTrack){
-    if(gameState==='title') playTrack('menu');
+    if(gameState==='title'||gameState==='mode'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
     if(gameState==='select') playTrack('select');
     if(gameState==='stage') playTrack('stage');
-    if(gameState==='vs') playTrack('vs');
+    if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
     if(gameState==='fight') playTrack(currentFightTrack());
   }
 }
@@ -241,10 +309,10 @@ function toggleMute(){
   Object.values(tracks).forEach(t=>t.muted=muted);
   if(muted){ pauseAllMusic(); }
   else {
-    if(gameState==='title') playTrack('menu');
+    if(gameState==='title'||gameState==='mode'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
     if(gameState==='select') playTrack('select');
     if(gameState==='stage') playTrack('stage');
-    if(gameState==='vs') playTrack('vs');
+    if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
     if(gameState==='fight') playTrack(currentFightTrack());
   }
 }
@@ -261,7 +329,7 @@ function handleTitleInput(e){
     forcePlayTrack('menu');
     return;
   }
-  goSelect();
+  goModeMenu();
 }
 function tone(freq,dur=0.08,type='square',vol=0.16,delay=0){
   if(muted||!audioCtx)return;
@@ -300,7 +368,12 @@ function sfx(name){
 function fighter(x,charId,cpu=false){const baseName=characters[charId].name;return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0};}
 let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null; resetRound(false);
 function resetRound(){const cpuChar=(selectedEnemy!==selectedFighter?selectedEnemy:(selectedFighter+1)%characters.length);p1=fighter(245,selectedFighter,false);cpu=fighter(720,cpuChar,true);roundTime=99;roundOver=false;winner='';paused=false;keys['f']=keys['g']=keys['h']=false;if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}}
+function goModeMenu(){gameState='mode';titleAudioReady=true;initAudio(true);playTrack('menu');}
+function startQuickMatch(){currentMode='quick';goSelect();}
+function startTournamentSelect(){currentMode='tournament';goSelect();}
+function requestNewTournament(){if(loadTournament()){gameState='confirmNew';initAudio(true);playTrack('menu');}else startTournamentSelect();}
 function goSelect(){gameState='select';titleAudioReady=false;initAudio(true);restartTrack('select');}
+function confirmFighterSelection(){if(currentMode==='tournament')buildTournament();else goStageSelect();}
 function goStageSelect(){gameState='stage';initAudio(true);restartTrack('stage');}
 function chooseRandomEnemy(){const choices=characters.map((_,i)=>i).filter(i=>i!==selectedFighter);selectedEnemy=choices[Math.floor(Math.random()*choices.length)]||((selectedFighter+1)%characters.length);}
 function prepareVsScreen(){chooseRandomEnemy();gameState='vs';initAudio(true);restartTrack('vs');}
@@ -342,7 +415,22 @@ function finishRound(side){
 function handleFightConfirm(){
   if(!roundOver) return;
   if(matchOver){
-    goTitle();
+    if(currentMode==='tournament'&&validTournament(tournament)){
+      if(p1Rounds>=2){
+        tournament.currentRound++;
+        if(tournament.currentRound>=tournament.opponents.length){
+          clearTournament();
+          gameState='tournamentWin';
+          initAudio(true);restartTrack('menu');
+        }else{
+          saveTournament();
+          openTournamentLadder();
+        }
+      }else{
+        gameState='tournamentOver';
+        initAudio(true);restartTrack('menu');
+      }
+    }else goTitle();
     return;
   }
   resetRound();
@@ -563,13 +651,50 @@ function drawTitle(){
   ctx.fillText(msg,W/2,H-24);
   ctx.restore();
 }
+
+function drawModeScreen(){
+  if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.66)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  ctx.fillStyle='#ffe35a';ctx.shadowColor='#31c8ff';ctx.shadowBlur=18;ctx.font='62px Impact';ctx.fillText('CHOOSE MODE',W/2,105);ctx.shadowBlur=0;
+  drawMenuButton(W/2-190,165,380,70,'QUICK MATCH','#31c8ff');
+  drawMenuButton(W/2-190,255,380,70,'NEW TOURNAMENT','#ff3ddb');
+  const saved=loadTournament();
+  if(saved){
+    const round=saved.currentRound+1,total=saved.opponents.length;
+    drawMenuButton(W/2-190,345,380,70,'CONTINUE TOURNAMENT','#41ff6b');
+    ctx.fillStyle='#9dffca';ctx.font='15px Arial';ctx.fillText('Saved: '+characters[saved.selectedFighter].name+' — Fight '+round+' of '+total,W/2,438);
+  }
+  ctx.fillStyle='rgba(255,255,255,.75)';ctx.font='15px Arial';ctx.fillText('Quick Match = current single fight mode',W/2,478);
+  ctx.restore();
+}
+function handleModePointer(e){
+  initAudio(false);const p=canvasPoint(e),x=p.x,y=p.y;
+  if(x>=W/2-190&&x<=W/2+190&&y>=165&&y<=235){startQuickMatch();return;}
+  if(x>=W/2-190&&x<=W/2+190&&y>=255&&y<=325){requestNewTournament();return;}
+  if(loadTournament()&&x>=W/2-190&&x<=W/2+190&&y>=345&&y<=415){continueTournament();return;}
+}
+function drawConfirmNew(){
+  if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  ctx.fillStyle='#ff3ddb';ctx.shadowColor='#ff3ddb';ctx.shadowBlur=18;ctx.font='54px Impact';ctx.fillText('START NEW TOURNAMENT?',W/2,155);ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';ctx.font='22px Arial';ctx.fillText('Your current tournament progress will be lost.',W/2,210);
+  drawMenuButton(W/2-330,300,280,64,'CANCEL','#31c8ff');
+  drawMenuButton(W/2+50,300,280,64,'START NEW','#ff3ddb');
+  ctx.restore();
+}
+function handleConfirmNewPointer(e){
+  const p=canvasPoint(e),x=p.x,y=p.y;
+  if(x>=W/2-330&&x<=W/2-50&&y>=300&&y<=364){goModeMenu();return;}
+  if(x>=W/2+50&&x<=W/2+330&&y>=300&&y<=364){clearTournament();startTournamentSelect();return;}
+}
 function handleSelectPointer(e){
   initAudio(false);
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
   if(x>=54&&x<=154&&y>=220&&y<=338){selectedFighter=(selectedFighter+characters.length-1)%characters.length;return;}
   if(x>=W-154&&x<=W-54&&y>=220&&y<=338){selectedFighter=(selectedFighter+1)%characters.length;return;}
-  if(x>=W/2-170&&x<=W/2+170&&y>=448&&y<=510) goStageSelect();
+  if(x>=W/2-170&&x<=W/2+170&&y>=448&&y<=510) confirmFighterSelection();
+  if(x>=30&&x<=170&&y>=448&&y<=510) goModeMenu();
   if(x>=W/2-190&&x<=W/2+190&&y>=118&&y<=430){return;}
 }
 function drawSelect(){
@@ -604,6 +729,7 @@ function drawSelect(){
   ctx.fillRect(W/2-170,448,340,62);ctx.strokeRect(W/2-170,448,340,62);
   ctx.fillStyle='#fff';ctx.font='34px Impact';ctx.fillText('CONFIRM',W/2,490);
   ctx.shadowBlur=0;
+  drawMenuButton(30,448,140,62,'BACK','#ff3ddb');
   ctx.restore();
 }
 
@@ -711,6 +837,52 @@ function drawVsScreen(){
   ctx.restore();
 }
 
+
+function drawTournamentLadder(){
+  if(!validTournament(tournament)){goModeMenu();return;}
+  const bg=assets[stages[selectedStage].key]||assets.stage;
+  if(bg&&bg.width)ctx.drawImage(bg,0,0,W,H);else drawStage();
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.76)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.fillStyle='#ffe35a';ctx.shadowColor='#ff3ddb';ctx.shadowBlur=18;ctx.font='54px Impact';ctx.fillText('TOURNAMENT LADDER',W/2,58);ctx.shadowBlur=0;
+  const leftX=46,rowY=96,rowW=405,rowH=58;
+  tournament.opponents.forEach((charIndex,i)=>{
+    const y=rowY+i*66,done=i<tournament.currentRound,current=i===tournament.currentRound,final=i===tournament.opponents.length-1;
+    ctx.fillStyle=current?'rgba(24,54,78,.95)':'rgba(6,20,36,.82)';
+    ctx.strokeStyle=done?'#41ff6b':current?'#ffe35a':'rgba(255,255,255,.30)';ctx.lineWidth=current?4:2;
+    ctx.shadowColor=current?'#ffe35a':'transparent';ctx.shadowBlur=current?12:0;ctx.fillRect(leftX,y,rowW,rowH);ctx.strokeRect(leftX,y,rowW,rowH);ctx.shadowBlur=0;
+    ctx.textAlign='left';ctx.font='20px Impact';ctx.fillStyle=done?'#41ff6b':current?'#ffe35a':'#fff';
+    ctx.fillText(done?'✓':current?'▶':'•',leftX+14,y+36);
+    ctx.fillText(final?'FINAL':'ROUND '+(i+1),leftX+48,y+36);
+    ctx.fillStyle='#fff';ctx.fillText(characters[charIndex].name,leftX+155,y+36);
+    ctx.textAlign='right';ctx.font='15px Arial';ctx.fillStyle='rgba(255,255,255,.82)';ctx.fillText(stages[tournament.stages[i]].name,leftX+rowW-14,y+35);
+  });
+  const ch=characters[selectedEnemy],img=assets[ch.assetPrefix+'_stand'];
+  ctx.textAlign='center';ctx.fillStyle='#ff3ddb';ctx.font='25px Impact';ctx.fillText(tournament.currentRound===tournament.opponents.length-1?'FINAL BATTLE':'NEXT OPPONENT',700,115);
+  ctx.fillStyle='rgba(6,20,36,.88)';ctx.strokeStyle='#ff3ddb';ctx.lineWidth=4;ctx.shadowColor='#ff3ddb';ctx.shadowBlur=14;ctx.fillRect(555,135,290,250);ctx.strokeRect(555,135,290,250);ctx.shadowBlur=0;
+  if(img&&img.width){const th=185,sc=th/img.height,dw=img.width*sc;ctx.save();ctx.translate(700,157);ctx.scale(-1,1);ctx.drawImage(img,-dw/2,0,dw,th);ctx.restore();}
+  ctx.fillStyle='#ffe35a';ctx.font='38px Impact';ctx.fillText(ch.name,700,375);
+  ctx.fillStyle='#31c8ff';ctx.font='21px Impact';ctx.fillText(stages[selectedStage].name,700,414);
+  drawMenuButton(610,442,180,62,'FIGHT!','#ffe35a');
+  drawMenuButton(46,442,250,62,'RETURN TO MENU','#31c8ff');
+  ctx.restore();
+}
+function handleTournamentPointer(e){
+  const p=canvasPoint(e),x=p.x,y=p.y;
+  if(x>=610&&x<=790&&y>=442&&y<=504){startFight();return;}
+  if(x>=46&&x<=296&&y>=442&&y<=504){saveTournament();goTitle();return;}
+}
+function drawTournamentEnd(win){
+  if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.76)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  const ch=characters[selectedFighter],img=assets[ch.assetPrefix+'_stand'];
+  ctx.fillStyle=win?'#ffe35a':'#ff3ddb';ctx.shadowColor=win?'#41ff6b':'#ff3ddb';ctx.shadowBlur=22;ctx.font='65px Impact';ctx.fillText(win?'TOURNAMENT CHAMPION!':'TOURNAMENT OVER',W/2,105);ctx.shadowBlur=0;
+  if(img&&img.width){const th=230,sc=th/img.height,dw=img.width*sc;ctx.drawImage(img,W/2-dw/2,125,dw,th);}
+  ctx.fillStyle='#fff';ctx.font='46px Impact';ctx.fillText(win?ch.name+' WINS!':'BETTER LUCK NEXT TIME',W/2,405);
+  if(!win){ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='17px Arial';ctx.fillText('Your saved ladder is still available from the menu.',W/2,435);}
+  drawMenuButton(W/2-170,455,340,58,'RETURN TO MENU',win?'#41ff6b':'#31c8ff');
+  ctx.restore();
+}
+function handleTournamentEndPointer(e){const p=canvasPoint(e);if(p.x>=W/2-170&&p.x<=W/2+170&&p.y>=455&&p.y<=513)goTitle();}
 function handlePausePointer(e){
   const p=canvasPoint(e);
   const x=p.x, y=p.y;
@@ -740,7 +912,7 @@ function drawOverlay(){
   if(roundOver){
     if(matchOver) message(winner);
     else message(winner);
-    drawReturnButton(matchOver?'RETURN TO MENU':'NEXT ROUND');
+    drawReturnButton(matchOver?(currentMode==='tournament'?(p1Rounds>=2?'CONTINUE':'TOURNAMENT OVER'):'RETURN TO MENU'):'NEXT ROUND');
   }
 }
 function drawReturnButton(label){
@@ -751,11 +923,16 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V45...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V56...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
+if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
+if(gameState==='confirmNew'){drawConfirmNew();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
 if(gameState==='vs'){drawVsScreen();requestAnimationFrame(loop);return;}
+if(gameState==='tournamentLadder'){drawTournamentLadder();requestAnimationFrame(loop);return;}
+if(gameState==='tournamentWin'){drawTournamentEnd(true);requestAnimationFrame(loop);return;}
+if(gameState==='tournamentOver'){drawTournamentEnd(false);requestAnimationFrame(loop);return;}
 update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();requestAnimationFrame(loop);}requestAnimationFrame(loop);
 </script>
 </body>
