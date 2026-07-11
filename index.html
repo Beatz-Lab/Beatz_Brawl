@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V58: Beatz tournament ending slideshow -->
+<!-- Beatz Brawl V60: resilient asset loader and ending asset cache refresh -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -92,7 +92,7 @@ let activeTrack=null;
 const assets={};
 const files={
  stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png',
- beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp',
+ beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
@@ -101,7 +101,26 @@ const files={
  aimee_stand:'assets/characters/aimee/aimee_stand.png',aimee_walk:'assets/characters/aimee/aimee_walk.png',aimee_punch:'assets/characters/aimee/aimee_punch.png',aimee_kick:'assets/characters/aimee/aimee_kick.png',aimee_block:'assets/characters/aimee/aimee_block.png',aimee_crouch:'assets/characters/aimee/aimee_crouch.png',aimee_special:'assets/characters/aimee/aimee_special.png',aimee_jump:'assets/characters/aimee/aimee_jump.png'
 };
 const total=Object.keys(files).length;
-for(const [k,src] of Object.entries(files)){const img=new Image();img.onload=()=>loaded++;img.src=src;assets[k]=img;}
+const missingAssets=[];
+for(const [k,src] of Object.entries(files)){
+  const img=new Image();
+  let settled=false;
+  const finish=(ok)=>{
+    if(settled)return;
+    settled=true;
+    clearTimeout(timeout);
+    if(!ok){
+      missingAssets.push(src);
+      console.warn('Beatz Brawl asset failed to load:',src);
+    }
+    loaded++;
+  };
+  img.onload=()=>finish(true);
+  img.onerror=()=>finish(false);
+  const timeout=setTimeout(()=>finish(false),12000);
+  img.src=src;
+  assets[k]=img;
+}
 const characters=[
   {id:'beatz',name:'BEATZ',specialName:'Bass Shockwave',effect:'blue',assetPrefix:'beatz'},
   {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'},
@@ -650,7 +669,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   // Each character's generated PNGs have slightly different internal scale.
   // These target heights keep upright actions from shrinking while still letting crouch/jump look correct.
   const spriteH={
-    beatz:{stand:217,walk:217,punch:217,kick:237,block:217,crouch:153,special:217,jump:222},
+    beatz:{stand:217,walk:217,punch:217,kick:247,block:217,crouch:153,special:217,jump:222},
     gary:{stand:243,walk:241,punch:243,kick:235,block:233,crouch:197,special:243,jump:227},
     emma:{stand:233,walk:241,punch:235,kick:243,block:213,crouch:161,special:253,jump:212},
     paige:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:223,special:260,jump:227},
@@ -659,6 +678,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const yOffset={
+    beatz:{crouch:10,special:5},
     aimee:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:10,special:10,jump:10}
   };
   const assetPrefix=characters[f.charId].assetPrefix;
@@ -1050,7 +1070,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V58...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V60...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1067,7 +1087,7 @@ update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V58 Beatz tournament ending slideshow -->
+<!-- Beatz Brawl V60 resilient asset loader and ending asset cache refresh -->
 </html>
 
 <!-- V44 Emma scale tune -->
