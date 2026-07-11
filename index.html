@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V72: Gary kick and jump scale tune -->
+<!-- Beatz Brawl V73: Emma new pose cache refresh -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -97,7 +97,7 @@ const files={
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
- emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
+ emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png?v=73',emma_crouch:'assets/characters/emma/emma_crouch.png?v=73',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png?v=73',
  paige_stand:'assets/characters/paige/paige_stand.png',paige_walk:'assets/characters/paige/paige_walk.png',paige_punch:'assets/characters/paige/paige_punch.png',paige_kick:'assets/characters/paige/paige_kick.png',paige_block:'assets/characters/paige/paige_block.png',paige_crouch:'assets/characters/paige/paige_crouch.png',paige_special:'assets/characters/paige/paige_special.png',paige_jump:'assets/characters/paige/paige_jump.png',
  lem_stand:'assets/characters/lem/lem_stand.png',lem_walk:'assets/characters/lem/lem_walk.png',lem_punch:'assets/characters/lem/lem_punch.png',lem_kick:'assets/characters/lem/lem_kick.png',lem_block:'assets/characters/lem/lem_block.png',lem_crouch:'assets/characters/lem/lem_crouch.png',lem_special:'assets/characters/lem/lem_special.png',lem_jump:'assets/characters/lem/lem_jump.png',
  aimee_stand:'assets/characters/aimee/aimee_stand.png',aimee_walk:'assets/characters/aimee/aimee_walk.png',aimee_punch:'assets/characters/aimee/aimee_punch.png',aimee_kick:'assets/characters/aimee/aimee_kick.png',aimee_block:'assets/characters/aimee/aimee_block.png',aimee_crouch:'assets/characters/aimee/aimee_crouch.png',aimee_special:'assets/characters/aimee/aimee_special.png',aimee_jump:'assets/characters/aimee/aimee_jump.png'
@@ -1078,7 +1078,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V72...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V73...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1095,7 +1095,7 @@ update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V72 Gary kick and jump scale tune -->
+<!-- Beatz Brawl V73 Emma new pose cache refresh -->
 </html>
 
 <!-- V44 Emma scale tune -->
