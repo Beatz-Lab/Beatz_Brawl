@@ -38,7 +38,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 </style>
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
-<!-- Beatz Brawl V56: Quick Match + saved Tournament mode -->
+<!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -90,7 +90,7 @@ Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsin
 let activeTrack=null;
 const assets={};
 const files={
- stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',title:'assets/ui/title_screen.png',
+ stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png',emma_crouch:'assets/characters/emma/emma_crouch.png',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png',
@@ -165,8 +165,14 @@ window.addEventListener('keydown',e=>{
   initAudio(false);
   if(gameState==='mode'){
     if(k==='1'||k==='q'){startQuickMatch();e.preventDefault();return;}
-    if(k==='2'||k==='t'){requestNewTournament();e.preventDefault();return;}
-    if((k==='3'||k==='c')&&loadTournament()){continueTournament();e.preventDefault();return;}
+    if(k==='2'||k==='t'){openTournamentModeChoice();e.preventDefault();return;}
+    if(k==='escape'||k==='backspace'){gameState='title';e.preventDefault();return;}
+    return;
+  }
+  if(gameState==='tournamentChoice'){
+    if(k==='escape'||k==='backspace'){goModeMenu();e.preventDefault();return;}
+    if(k==='1'||k==='c'){continueTournament();e.preventDefault();return;}
+    if(k==='2'||k==='n'){requestNewTournament();e.preventDefault();return;}
     return;
   }
   if(gameState==='confirmNew'){
@@ -250,6 +256,7 @@ document.querySelectorAll('.btn').forEach(el=>{
 canvas.addEventListener('pointerdown',e=>{
   if(gameState==='title'){handleTitleInput(e);}
   else if(gameState==='mode'){handleModePointer(e);}
+  else if(gameState==='tournamentChoice'){handleTournamentChoicePointer(e);}
   else if(gameState==='confirmNew'){handleConfirmNewPointer(e);}
   else if(gameState==='select'){handleSelectPointer(e);}
   else if(gameState==='stage'){handleStagePointer(e);}
@@ -270,7 +277,7 @@ function initAudio(startTrack=true){
   }
   if(audioCtx.state==='suspended') audioCtx.resume();
   if(startTrack){
-    if(gameState==='title'||gameState==='mode'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
+    if(gameState==='title'||gameState==='mode'||gameState==='tournamentChoice'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
     if(gameState==='select') playTrack('select');
     if(gameState==='stage') playTrack('stage');
     if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
@@ -309,7 +316,7 @@ function toggleMute(){
   Object.values(tracks).forEach(t=>t.muted=muted);
   if(muted){ pauseAllMusic(); }
   else {
-    if(gameState==='title'||gameState==='mode'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
+    if(gameState==='title'||gameState==='mode'||gameState==='tournamentChoice'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
     if(gameState==='select') playTrack('select');
     if(gameState==='stage') playTrack('stage');
     if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
@@ -653,25 +660,39 @@ function drawTitle(){
 }
 
 function drawModeScreen(){
-  if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
-  ctx.save();ctx.fillStyle='rgba(0,0,0,.66)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
-  ctx.fillStyle='#ffe35a';ctx.shadowColor='#31c8ff';ctx.shadowBlur=18;ctx.font='62px Impact';ctx.fillText('CHOOSE MODE',W/2,105);ctx.shadowBlur=0;
-  drawMenuButton(W/2-190,165,380,70,'QUICK MATCH','#31c8ff');
-  drawMenuButton(W/2-190,255,380,70,'NEW TOURNAMENT','#ff3ddb');
+  if(assets.modeSelect&&assets.modeSelect.width)ctx.drawImage(assets.modeSelect,0,0,W,H);
+  else if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
+}
+function openTournamentModeChoice(){
+  if(loadTournament()){gameState='tournamentChoice';initAudio(true);playTrack('menu');}
+  else startTournamentSelect();
+}
+function drawTournamentChoice(){
+  drawModeScreen();
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  ctx.fillStyle='#ffe35a';ctx.shadowColor='#ff3ddb';ctx.shadowBlur=18;ctx.font='52px Impact';ctx.fillText('TOURNAMENT',W/2,120);ctx.shadowBlur=0;
   const saved=loadTournament();
   if(saved){
     const round=saved.currentRound+1,total=saved.opponents.length;
-    drawMenuButton(W/2-190,345,380,70,'CONTINUE TOURNAMENT','#41ff6b');
-    ctx.fillStyle='#9dffca';ctx.font='15px Arial';ctx.fillText('Saved: '+characters[saved.selectedFighter].name+' — Fight '+round+' of '+total,W/2,438);
+    ctx.fillStyle='#fff';ctx.font='19px Arial';ctx.fillText('Saved: '+characters[saved.selectedFighter].name+' — Fight '+round+' of '+total,W/2,158);
   }
-  ctx.fillStyle='rgba(255,255,255,.75)';ctx.font='15px Arial';ctx.fillText('Quick Match = current single fight mode',W/2,478);
+  drawMenuButton(W/2-190,195,380,70,'CONTINUE TOURNAMENT','#41ff6b');
+  drawMenuButton(W/2-190,285,380,70,'NEW TOURNAMENT','#ff3ddb');
+  drawMenuButton(W/2-125,390,250,55,'BACK','#ffe35a');
   ctx.restore();
 }
 function handleModePointer(e){
   initAudio(false);const p=canvasPoint(e),x=p.x,y=p.y;
-  if(x>=W/2-190&&x<=W/2+190&&y>=165&&y<=235){startQuickMatch();return;}
-  if(x>=W/2-190&&x<=W/2+190&&y>=255&&y<=325){requestNewTournament();return;}
-  if(loadTournament()&&x>=W/2-190&&x<=W/2+190&&y>=345&&y<=415){continueTournament();return;}
+  // Invisible hit zones aligned to the artwork panels.
+  if(x>=70&&x<=475&&y>=210&&y<=425){startQuickMatch();return;}
+  if(x>=485&&x<=890&&y>=210&&y<=425){openTournamentModeChoice();return;}
+  if(x>=285&&x<=675&&y>=430&&y<=525){gameState='title';return;}
+}
+function handleTournamentChoicePointer(e){
+  initAudio(false);const p=canvasPoint(e),x=p.x,y=p.y;
+  if(x>=W/2-190&&x<=W/2+190&&y>=195&&y<=265){continueTournament();return;}
+  if(x>=W/2-190&&x<=W/2+190&&y>=285&&y<=355){requestNewTournament();return;}
+  if(x>=W/2-125&&x<=W/2+125&&y>=390&&y<=445){goModeMenu();return;}
 }
 function drawConfirmNew(){
   if(assets.title&&assets.title.width)ctx.drawImage(assets.title,0,0,W,H);else drawStage();
@@ -926,6 +947,7 @@ function drawReturnButton(label){
 function loop(ts){if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V56...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
+if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
 if(gameState==='confirmNew'){drawConfirmNew();requestAnimationFrame(loop);return;}
 if(gameState==='select'){drawSelect();requestAnimationFrame(loop);return;}
 if(gameState==='stage'){drawStageSelect();requestAnimationFrame(loop);return;}
