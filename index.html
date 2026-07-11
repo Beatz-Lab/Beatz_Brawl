@@ -38,7 +38,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 </style>
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
-<!-- Beatz Brawl V54: all character pose heights +40 -->
+<!-- Beatz Brawl V55: all character pose heights +25 again -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -495,12 +495,12 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   // Each character's generated PNGs have slightly different internal scale.
   // These target heights keep upright actions from shrinking while still letting crouch/jump look correct.
   const spriteH={
-    beatz:{stand:192,walk:192,punch:192,kick:212,block:192,crouch:128,special:192,jump:197},
-    gary:{stand:218,walk:216,punch:218,kick:210,block:208,crouch:172,special:218,jump:202},
-    emma:{stand:208,walk:216,punch:210,kick:218,block:188,crouch:136,special:228,jump:187},
-    paige:{stand:218,walk:216,punch:210,kick:208,block:188,crouch:198,special:235,jump:202},
-    lem:{stand:218,walk:216,punch:210,kick:208,block:188,crouch:166,special:218,jump:202},
-    aimee:{stand:208,walk:208,punch:213,kick:238,block:213,crouch:206,special:233,jump:223}
+    beatz:{stand:217,walk:217,punch:217,kick:237,block:217,crouch:153,special:217,jump:222},
+    gary:{stand:243,walk:241,punch:243,kick:235,block:233,crouch:197,special:243,jump:227},
+    emma:{stand:233,walk:241,punch:235,kick:243,block:213,crouch:161,special:253,jump:212},
+    paige:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:223,special:260,jump:227},
+    lem:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:191,special:243,jump:227},
+    aimee:{stand:233,walk:233,punch:238,kick:263,block:238,crouch:231,special:258,jump:248}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const yOffset={
