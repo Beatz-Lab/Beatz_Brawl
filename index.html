@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V60: resilient asset loader and ending asset cache refresh -->
+<!-- Beatz Brawl V61: Aimee scale and position tune plus Beatz crouch offset -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -674,12 +674,12 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     emma:{stand:233,walk:241,punch:235,kick:243,block:213,crouch:161,special:253,jump:212},
     paige:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:223,special:260,jump:227},
     lem:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:191,special:243,jump:227},
-    aimee:{stand:233,walk:233,punch:238,kick:263,block:238,crouch:231,special:258,jump:248}
+    aimee:{stand:253,walk:253,punch:258,kick:283,block:258,crouch:251,special:278,jump:268}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const yOffset={
-    beatz:{crouch:10,special:5},
-    aimee:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:10,special:10,jump:10}
+    beatz:{crouch:25,special:5},
+    aimee:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:20,special:20,jump:20}
   };
   const assetPrefix=characters[f.charId].assetPrefix;
   const poseYOffset=(yOffset[assetPrefix]&&yOffset[assetPrefix][f.action])||0;
@@ -1070,7 +1070,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V60...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V61...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1087,7 +1087,7 @@ update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V60 resilient asset loader and ending asset cache refresh -->
+<!-- Beatz Brawl V61 Aimee scale and position tune plus Beatz crouch offset -->
 </html>
 
 <!-- V44 Emma scale tune -->
