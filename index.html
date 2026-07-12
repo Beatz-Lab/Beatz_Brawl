@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V73: Emma new pose cache refresh -->
+<!-- Beatz Brawl V76: Beth special and crouch tune -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V34 - VS screen audio + cleaner VS layout
+// Beatz Brawl V76 - Beth special scale and crouch scale/position tune
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -74,6 +74,7 @@ const tracks={
   fightOutside:new Audio('assets/audio/fight_outside_hall.mp3'),
   fightCoventry:new Audio('assets/audio/fight_coventry_transport.mp3'),
   fightWembley:new Audio('assets/audio/fight_wembley_night.mp3'),
+  fightConcert:new Audio('assets/audio/stage_concert.mp3?v=74'),
   stage:new Audio('assets/audio/stage_select_theme.mp3'),
   vs:new Audio('assets/audio/vs_theme.mp3'),
   beatzWin:new Audio('assets/audio/beatz_win.mp3?v=68')
@@ -85,6 +86,7 @@ tracks.fightNightclub.loop=true;tracks.fightNightclub.volume=0.36;tracks.fightNi
 tracks.fightOutside.loop=true;tracks.fightOutside.volume=0.36;tracks.fightOutside.preload='auto';
 tracks.fightCoventry.loop=true;tracks.fightCoventry.volume=0.36;tracks.fightCoventry.preload='auto';
 tracks.fightWembley.loop=true;tracks.fightWembley.volume=0.36;tracks.fightWembley.preload='auto';
+tracks.fightConcert.loop=true;tracks.fightConcert.volume=0.36;tracks.fightConcert.preload='auto';
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
 tracks.vs.loop=true;tracks.vs.volume=0.48;tracks.vs.preload='auto';
 tracks.beatzWin.loop=true;tracks.beatzWin.volume=0.50;tracks.beatzWin.preload='auto';
@@ -93,14 +95,15 @@ Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsin
 let activeTrack=null;
 const assets={};
 const files={
- stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png',
+ stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png',
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png',gary_walk:'assets/characters/gary/gary_walk.png',gary_punch:'assets/characters/gary/gary_punch.png',gary_kick:'assets/characters/gary/gary_kick.png',gary_block:'assets/characters/gary/gary_block.png',gary_crouch:'assets/characters/gary/gary_crouch.png',gary_special:'assets/characters/gary/gary_special.png',gary_jump:'assets/characters/gary/gary_jump.png',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png?v=73',emma_crouch:'assets/characters/emma/emma_crouch.png?v=73',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png?v=73',
  paige_stand:'assets/characters/paige/paige_stand.png',paige_walk:'assets/characters/paige/paige_walk.png',paige_punch:'assets/characters/paige/paige_punch.png',paige_kick:'assets/characters/paige/paige_kick.png',paige_block:'assets/characters/paige/paige_block.png',paige_crouch:'assets/characters/paige/paige_crouch.png',paige_special:'assets/characters/paige/paige_special.png',paige_jump:'assets/characters/paige/paige_jump.png',
  lem_stand:'assets/characters/lem/lem_stand.png',lem_walk:'assets/characters/lem/lem_walk.png',lem_punch:'assets/characters/lem/lem_punch.png',lem_kick:'assets/characters/lem/lem_kick.png',lem_block:'assets/characters/lem/lem_block.png',lem_crouch:'assets/characters/lem/lem_crouch.png',lem_special:'assets/characters/lem/lem_special.png',lem_jump:'assets/characters/lem/lem_jump.png',
- aimee_stand:'assets/characters/aimee/aimee_stand.png',aimee_walk:'assets/characters/aimee/aimee_walk.png',aimee_punch:'assets/characters/aimee/aimee_punch.png',aimee_kick:'assets/characters/aimee/aimee_kick.png',aimee_block:'assets/characters/aimee/aimee_block.png',aimee_crouch:'assets/characters/aimee/aimee_crouch.png',aimee_special:'assets/characters/aimee/aimee_special.png',aimee_jump:'assets/characters/aimee/aimee_jump.png'
+ aimee_stand:'assets/characters/aimee/aimee_stand.png',aimee_walk:'assets/characters/aimee/aimee_walk.png',aimee_punch:'assets/characters/aimee/aimee_punch.png',aimee_kick:'assets/characters/aimee/aimee_kick.png',aimee_block:'assets/characters/aimee/aimee_block.png',aimee_crouch:'assets/characters/aimee/aimee_crouch.png',aimee_special:'assets/characters/aimee/aimee_special.png',aimee_jump:'assets/characters/aimee/aimee_jump.png',
+ beth_stand:'assets/characters/beth/beth_stand.png?v=74',beth_walk:'assets/characters/beth/beth_walk.png?v=74',beth_punch:'assets/characters/beth/beth_punch.png?v=74',beth_kick:'assets/characters/beth/beth_kick.png?v=74',beth_block:'assets/characters/beth/beth_block.png?v=74',beth_crouch:'assets/characters/beth/beth_crouch.png?v=74',beth_special:'assets/characters/beth/beth_special.png?v=74',beth_jump:'assets/characters/beth/beth_jump.png?v=74'
 };
 const total=Object.keys(files).length;
 const missingAssets=[];
@@ -129,7 +132,8 @@ const characters=[
   {id:'emma',name:'EMMA',specialName:'Purple Star Pirouette',effect:'stars',assetPrefix:'emma'},
   {id:'paige',name:'PAIGE',specialName:'Pink Power Rush',effect:'pink',assetPrefix:'paige'},
   {id:'lem',name:'LEM',specialName:'Pink Spotlight Burst',effect:'lem',assetPrefix:'lem'},
-  {id:'aimee',name:'AIMEE',specialName:'Purple Dance Spiral',effect:'pink',assetPrefix:'aimee'}
+  {id:'aimee',name:'AIMEE',specialName:'Purple Dance Spiral',effect:'pink',assetPrefix:'aimee'},
+  {id:'beth',name:'BETH',specialName:'Pink Outlaw Blast',effect:'sprite',assetPrefix:'beth'}
 ];
 let selectedFighter=0;
 let selectedEnemy=1;
@@ -163,7 +167,7 @@ function advanceTournamentEnding(){
 function previousTournamentEnding(){
   if(endingSceneIndex>0){endingSceneIndex--;endingSceneStarted=performance.now();}
 }
-const TOURNAMENT_SAVE_KEY='beatzBrawlTournamentV1';
+const TOURNAMENT_SAVE_KEY='beatzBrawlTournamentV2';
 let tournament=null;
 function shuffle(arr){
   const out=[...arr];
@@ -171,7 +175,12 @@ function shuffle(arr){
   return out;
 }
 function validTournament(t){
-  return !!(t&&t.active&&Number.isInteger(t.selectedFighter)&&Array.isArray(t.opponents)&&Array.isArray(t.stages)&&Number.isInteger(t.currentRound)&&t.opponents.length&&t.opponents.length===t.stages.length&&t.currentRound>=0&&t.currentRound<t.opponents.length);
+  const fightCount=Math.min(Math.max(0,characters.length-1),stages.length);
+  if(!(t&&t.active&&Number.isInteger(t.selectedFighter)&&t.selectedFighter>=0&&t.selectedFighter<characters.length&&Array.isArray(t.opponents)&&Array.isArray(t.stages)&&Number.isInteger(t.currentRound)))return false;
+  if(t.opponents.length!==fightCount||t.stages.length!==fightCount||t.currentRound<0||t.currentRound>=fightCount)return false;
+  const opponentsValid=t.opponents.every(i=>Number.isInteger(i)&&i>=0&&i<characters.length&&i!==t.selectedFighter);
+  const stagesValid=t.stages.every(i=>Number.isInteger(i)&&i>=0&&i<stages.length);
+  return opponentsValid&&stagesValid&&new Set(t.opponents).size===t.opponents.length&&new Set(t.stages).size===t.stages.length;
 }
 function loadTournament(){
   try{const t=JSON.parse(localStorage.getItem(TOURNAMENT_SAVE_KEY)||'null');return validTournament(t)?t:null;}catch(e){return null;}
@@ -186,7 +195,7 @@ function clearTournament(){
 function buildTournament(){
   const opponents=shuffle(characters.map((_,i)=>i).filter(i=>i!==selectedFighter));
   const stageOrder=shuffle(stages.map((_,i)=>i));
-  const fightCount=Math.min(opponents.length,stageOrder.length);
+  const fightCount=Math.min(characters.length-1,stages.length);
   tournament={active:true,selectedFighter,opponents:opponents.slice(0,fightCount),stages:stageOrder.slice(0,fightCount),currentRound:0};
   saveTournament();
   openTournamentLadder();
@@ -607,7 +616,8 @@ const stages=[
   {name:'OUTSIDE HALL', key:'stageOutside', track:'fightOutside'},
   {name:'ROOFTOP', key:'stage', track:'fight'},
   {name:'TRANSPORT MUSEUM', key:'stageCoventry', track:'fightCoventry'},
-  {name:'WEMBLEY NIGHT', key:'stageWembley', track:'fightWembley'}
+  {name:'WEMBLEY NIGHT', key:'stageWembley', track:'fightWembley'},
+  {name:'CREW GIRLS CONCERT', key:'stageConcert', track:'fightConcert'}
 ];
 let selectedStage=0;
 function selectedStageImage(){return assets[stages[selectedStage].key]||assets.stage;}
@@ -678,7 +688,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     emma:{stand:203,walk:241,punch:235,kick:243,block:198,crouch:161,special:278,jump:207},
     paige:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:223,special:260,jump:237},
     lem:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:191,special:243,jump:227},
-    aimee:{stand:253,walk:253,punch:258,kick:283,block:258,crouch:251,special:278,jump:268}
+    aimee:{stand:253,walk:253,punch:258,kick:283,block:258,crouch:251,special:278,jump:268},
+    beth:{stand:243,walk:258,punch:238,kick:263,block:238,crouch:213,special:293,jump:243}
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const yOffset={
@@ -687,13 +698,14 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     emma:{walk:15,punch:15,kick:15,special:15},
     paige:{stand:15,walk:15,punch:15,kick:15,block:15,crouch:35,special:15,jump:15},
     lem:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:25,special:10,jump:10},
-    aimee:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:20,special:20,jump:20}
+    aimee:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:20,special:20,jump:20},
+    beth:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:35,special:10,jump:10}
   };
   const assetPrefix=characters[f.charId].assetPrefix;
   const poseYOffset=(yOffset[assetPrefix]&&yOffset[assetPrefix][f.action])||0;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh+poseYOffset;if(f.action==='jump')dy=f.y-dh-14+poseYOffset;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
 // Source sprites face RIGHT. Only mirror when the fighter is facing LEFT.
-if(f.facing===-1){ctx.translate(f.x,0);ctx.scale(-1,1);ctx.drawImage(img,-dw/2,dy,dw,dh);}else{ctx.drawImage(img,f.x-dw/2,dy,dw,dh);}ctx.restore();ctx.globalAlpha=1;if(f.action==='special'&&f.timer>12)drawSpecialEffect(f);}
+if(f.facing===-1){ctx.translate(f.x,0);ctx.scale(-1,1);ctx.drawImage(img,-dw/2,dy,dw,dh);}else{ctx.drawImage(img,f.x-dw/2,dy,dw,dh);}ctx.restore();ctx.globalAlpha=1;if(f.action==='special'&&f.timer>12&&characters[f.charId].effect!=='sprite')drawSpecialEffect(f);}
 function drawSpecialEffect(f){
   const ch=characters[f.charId];
   ctx.save();
@@ -953,17 +965,17 @@ function drawTournamentLadder(){
   if(bg&&bg.width)ctx.drawImage(bg,0,0,W,H);else drawStage();
   ctx.save();ctx.fillStyle='rgba(0,0,0,.76)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';ctx.fillStyle='#ffe35a';ctx.shadowColor='#ff3ddb';ctx.shadowBlur=18;ctx.font='54px Impact';ctx.fillText('TOURNAMENT LADDER',W/2,58);ctx.shadowBlur=0;
-  const leftX=46,rowY=96,rowW=405,rowH=58;
+  const leftX=46,rowY=86,rowW=405,rowH=48,rowGap=54;
   tournament.opponents.forEach((charIndex,i)=>{
-    const y=rowY+i*66,done=i<tournament.currentRound,current=i===tournament.currentRound,final=i===tournament.opponents.length-1;
+    const y=rowY+i*rowGap,done=i<tournament.currentRound,current=i===tournament.currentRound,final=i===tournament.opponents.length-1;
     ctx.fillStyle=current?'rgba(24,54,78,.95)':'rgba(6,20,36,.82)';
     ctx.strokeStyle=done?'#41ff6b':current?'#ffe35a':'rgba(255,255,255,.30)';ctx.lineWidth=current?4:2;
     ctx.shadowColor=current?'#ffe35a':'transparent';ctx.shadowBlur=current?12:0;ctx.fillRect(leftX,y,rowW,rowH);ctx.strokeRect(leftX,y,rowW,rowH);ctx.shadowBlur=0;
-    ctx.textAlign='left';ctx.font='20px Impact';ctx.fillStyle=done?'#41ff6b':current?'#ffe35a':'#fff';
-    ctx.fillText(done?'✓':current?'▶':'•',leftX+14,y+36);
-    ctx.fillText(final?'FINAL':'ROUND '+(i+1),leftX+48,y+36);
-    ctx.fillStyle='#fff';ctx.fillText(characters[charIndex].name,leftX+155,y+36);
-    ctx.textAlign='right';ctx.font='15px Arial';ctx.fillStyle='rgba(255,255,255,.82)';ctx.fillText(stages[tournament.stages[i]].name,leftX+rowW-14,y+35);
+    ctx.textAlign='left';ctx.font='18px Impact';ctx.fillStyle=done?'#41ff6b':current?'#ffe35a':'#fff';
+    ctx.fillText(done?'✓':current?'▶':'•',leftX+14,y+31);
+    ctx.fillText(final?'FINAL':'ROUND '+(i+1),leftX+48,y+31);
+    ctx.fillStyle='#fff';ctx.fillText(characters[charIndex].name,leftX+155,y+31);
+    ctx.textAlign='right';ctx.font='13px Arial';ctx.fillStyle='rgba(255,255,255,.82)';ctx.fillText(stages[tournament.stages[i]].name,leftX+rowW-14,y+30);
   });
   const ch=characters[selectedEnemy],img=assets[ch.assetPrefix+'_stand'];
   ctx.textAlign='center';ctx.fillStyle='#ff3ddb';ctx.font='25px Impact';ctx.fillText(tournament.currentRound===tournament.opponents.length-1?'FINAL BATTLE':'NEXT OPPONENT',700,115);
@@ -1078,7 +1090,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V73...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V76...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1095,7 +1107,7 @@ update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V73 Emma new pose cache refresh -->
+<!-- Beatz Brawl V76 Beth special and crouch tune -->
 </html>
 
 <!-- V44 Emma scale tune -->
