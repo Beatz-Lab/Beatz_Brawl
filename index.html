@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V85: Ciera kick scale and dance-note special -->
+<!-- Beatz Brawl V86: Full Practice Mode -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,15 +54,16 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V85 - Ciera kick scale and dance-note special
+// Beatz Brawl V86 - Full Practice Mode
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
 const keys={};let paused=false,roundOver=false,winner='',roundTime=99,last=0,loaded=0;
 let muted=false,audioCtx=null,musicStarted=false;
 let gameState="title"; // title -> mode -> select/stage/vs/tournamentLadder/fight/tournamentEnding
-let currentMode="quick"; // quick | tournament
+let currentMode="quick"; // practice | quick | tournament
 let titleAudioReady=false, titleInputLock=0;
+let practiceHits=0,practiceDamage=0,practiceCombo=0,practiceBestCombo=0,practiceComboTimer=0;
 const SFX_BOOST=1.2;
 const SPECIAL_COOLDOWN_MAX=120;
 const SPECIAL_POSE_TIMER=42;
@@ -77,6 +78,7 @@ const tracks={
   fightConcert:new Audio('assets/audio/stage_concert.mp3?v=74'),
   fightEarlsdon:new Audio('assets/audio/fight_earlsdon.mp3?v=77'),
   fightBoxing:new Audio('assets/audio/fight_boxing.mp3?v=84'),
+  fightPractice:new Audio('assets/audio/fight_practice.mp3?v=86'),
   stage:new Audio('assets/audio/stage_select_theme.mp3'),
   vs:new Audio('assets/audio/vs_theme.mp3'),
   beatzWin:new Audio('assets/audio/beatz_win.mp3?v=68')
@@ -91,6 +93,7 @@ tracks.fightWembley.loop=true;tracks.fightWembley.volume=0.36;tracks.fightWemble
 tracks.fightConcert.loop=true;tracks.fightConcert.volume=0.36;tracks.fightConcert.preload='auto';
 tracks.fightEarlsdon.loop=true;tracks.fightEarlsdon.volume=0.36;tracks.fightEarlsdon.preload='auto';
 tracks.fightBoxing.loop=true;tracks.fightBoxing.volume=0.36;tracks.fightBoxing.preload='auto';
+tracks.fightPractice.loop=true;tracks.fightPractice.volume=0.36;tracks.fightPractice.preload='auto';
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
 tracks.vs.loop=true;tracks.vs.volume=0.48;tracks.vs.preload='auto';
 tracks.beatzWin.loop=true;tracks.beatzWin.volume=0.50;tracks.beatzWin.preload='auto';
@@ -99,7 +102,7 @@ Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsin
 let activeTrack=null;
 const assets={};
 const files={
- stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png',
+ stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',stagePractice:'assets/stages/stage_practice.png?v=86',practiceDummy:'assets/ui/practice_dummy.png?v=86',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png?v=86',
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png?v=81',gary_walk:'assets/characters/gary/gary_walk.png?v=81',gary_punch:'assets/characters/gary/gary_punch.png?v=81',gary_kick:'assets/characters/gary/gary_kick.png?v=81',gary_block:'assets/characters/gary/gary_block.png?v=81',gary_crouch:'assets/characters/gary/gary_crouch.png?v=81',gary_special:'assets/characters/gary/gary_special.png?v=81',gary_jump:'assets/characters/gary/gary_jump.png?v=81',
@@ -234,8 +237,9 @@ window.addEventListener('keydown',e=>{
   }
   initAudio(false);
   if(gameState==='mode'){
-    if(k==='1'||k==='q'){startQuickMatch();e.preventDefault();return;}
-    if(k==='2'||k==='t'){openTournamentModeChoice();e.preventDefault();return;}
+    if(k==='1'||k==='p'){startPracticeMode();e.preventDefault();return;}
+    if(k==='2'||k==='q'){startQuickMatch();e.preventDefault();return;}
+    if(k==='3'||k==='t'){openTournamentModeChoice();e.preventDefault();return;}
     if(k==='escape'||k==='backspace'){gameState='title';e.preventDefault();return;}
     return;
   }
@@ -470,24 +474,43 @@ function sfx(name){
 }
 
 function fighter(x,charId,cpu=false){const baseName=characters[charId].name;return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0};}
+function trainingDummy(x=720){return{x,y:GROUND,vx:0,vy:0,w:108,h:210,name:'TRAINING DUMMY',cpu:true,dummy:true,hp:100,facing:-1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0,wobble:0};}
 let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null; resetRound(false);
-function resetRound(){const cpuChar=(selectedEnemy!==selectedFighter?selectedEnemy:(selectedFighter+1)%characters.length);p1=fighter(245,selectedFighter,false);cpu=fighter(720,cpuChar,true);roundTime=99;roundOver=false;winner='';paused=false;keys['f']=keys['g']=keys['h']=false;if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}}
+function resetRound(){
+  p1=fighter(245,selectedFighter,false);
+  if(currentMode==='practice'){
+    cpu=trainingDummy(720);
+  }else{
+    const cpuChar=(selectedEnemy!==selectedFighter?selectedEnemy:(selectedFighter+1)%characters.length);
+    cpu=fighter(720,cpuChar,true);
+  }
+  roundTime=99;roundOver=false;winner='';paused=false;
+  keys['f']=keys['g']=keys['h']=false;
+  if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}
+}
 function goModeMenu(){gameState='mode';titleAudioReady=true;initAudio(true);playTrack('menu');}
+function startPracticeMode(){currentMode='practice';goSelect();}
 function startQuickMatch(){currentMode='quick';goSelect();}
 function startTournamentSelect(){currentMode='tournament';goSelect();}
 function requestNewTournament(){if(loadTournament()){gameState='confirmNew';initAudio(true);playTrack('menu');}else startTournamentSelect();}
 function goSelect(){gameState='select';titleAudioReady=false;initAudio(true);restartTrack('select');}
-function confirmFighterSelection(){if(currentMode==='tournament')buildTournament();else goStageSelect();}
+function confirmFighterSelection(){
+  if(currentMode==='practice')startPracticeFight();
+  else if(currentMode==='tournament')buildTournament();
+  else goStageSelect();
+}
 function goStageSelect(){gameState='stage';initAudio(true);restartTrack('stage');}
 function chooseRandomEnemy(){const choices=characters.map((_,i)=>i).filter(i=>i!==selectedFighter);selectedEnemy=choices[Math.floor(Math.random()*choices.length)]||((selectedFighter+1)%characters.length);}
 function prepareVsScreen(){chooseRandomEnemy();gameState='vs';initAudio(true);restartTrack('vs');}
 function startFight(){gameState='fight';startNewMatch();initAudio(true);restartTrack(currentFightTrack());}
+function startPracticeFight(){gameState='fight';startNewMatch();initAudio(true);restartTrack('fightPractice');}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function hurtBox(f){const crouch=f.action==='crouch'||f.action==='block';return{x:f.x-f.w/2,y:f.y-(crouch?118:f.h),w:f.w,h:crouch?118:f.h};}
 function attackBox(f,type){const range=type==='special'?175:type==='kick'?108:86;const height=type==='kick'?58:76;const y=type==='kick'?f.y-118:f.y-142;return{x:f.facing===1?f.x+26:f.x-26-range,y,w:range,h:height};}
 function intersects(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 
 function currentFightTrack(){
+  if(currentMode==='practice')return 'fightPractice';
   const st=stages[selectedStage];
   return (st&&st.track)||'fight';
 }
@@ -496,6 +519,9 @@ function startNewMatch(){
   cpuRounds=0;
   matchOver=false;
   roundWinnerSide=null;
+  if(currentMode==='practice'){
+    practiceHits=0;practiceDamage=0;practiceCombo=0;practiceBestCombo=0;practiceComboTimer=0;
+  }
   resetRound();
 }
 function finishRound(side){
@@ -553,9 +579,48 @@ function goTitle(){
   initAudio(true);
   restartTrack('menu');
 }
-function doAttack(att,def,type){if(att.cool>0||roundOver)return;att.action=type;att.timer=type==='special'?SPECIAL_POSE_TIMER:22;att.cool=type==='special'?68:30;if(type==='special'){att.specialCool=SPECIAL_COOLDOWN_MAX;sfx('special');}setTimeout(()=>{if(roundOver)return;const box=attackBox(att,type),hb=hurtBox(def);if(intersects(box,hb)){if(type==='kick'&&(def.crouch||def.action==='crouch')){sfx('block');return;}let dmg=type==='special'?16:type==='kick'?10:7;const wasBlocked=!!def.block; if(wasBlocked)dmg=Math.max(1,Math.ceil(dmg*.15));def.hp=Math.max(0,def.hp-dmg);def.vx=att.facing*(wasBlocked?3.2:7.5);def.hitFlash=12;sfx(wasBlocked?'block':type);if(def.hp<=0){finishRound(att===p1?'p1':'cpu');}}},type==='special'?180:105);}
-function update(dt){if(paused||roundOver)return;roundTime-=dt/1000;if(roundTime<=0){roundTime=0;finishRound(p1.hp>=cpu.hp?'p1':'cpu');}
+function doAttack(att,def,type){
+  if(att.cool>0||roundOver)return;
+  att.action=type;att.timer=type==='special'?SPECIAL_POSE_TIMER:22;
+  att.cool=type==='special'?68:30;
+  if(type==='special'){att.specialCool=SPECIAL_COOLDOWN_MAX;sfx('special');}
+  setTimeout(()=>{
+    if(roundOver)return;
+    const box=attackBox(att,type),hb=hurtBox(def);
+    if(!intersects(box,hb))return;
+    if(type==='kick'&&(def.crouch||def.action==='crouch')){sfx('block');return;}
+    let dmg=type==='special'?16:type==='kick'?10:7;
+    const wasBlocked=!!def.block;
+    if(wasBlocked)dmg=Math.max(1,Math.ceil(dmg*.15));
+
+    if(currentMode==='practice'&&def&&def.dummy){
+      practiceHits++;
+      practiceDamage+=dmg;
+      practiceCombo++;
+      practiceBestCombo=Math.max(practiceBestCombo,practiceCombo);
+      practiceComboTimer=105;
+      def.hp=100;
+      def.hitFlash=12;
+      def.wobble=Math.max(def.wobble,type==='special'?18:type==='kick'?13:9);
+      sfx(type);
+      return;
+    }
+
+    def.hp=Math.max(0,def.hp-dmg);
+    def.vx=att.facing*(wasBlocked?3.2:7.5);
+    def.hitFlash=12;
+    sfx(wasBlocked?'block':type);
+    if(def.hp<=0){finishRound(att===p1?'p1':'cpu');}
+  },type==='special'?180:105);
+}
+function update(dt){
+if(paused||roundOver)return;
+if(currentMode!=='practice'){
+  roundTime-=dt/1000;
+  if(roundTime<=0){roundTime=0;finishRound(p1.hp>=cpu.hp?'p1':'cpu');}
+}
 [p1,cpu].forEach(f=>{if(f.cool>0)f.cool--;if(f.specialCool>0)f.specialCool--;if(f.timer>0)f.timer--;if(f.hitFlash>0)f.hitFlash--;if(f.aiGuardTimer>0)f.aiGuardTimer--;if(f.aiCrouchTimer>0)f.aiCrouchTimer--;});
+if(currentMode==='practice')p1.specialCool=0;
 // Player input
 p1.block=!!keys['b'];p1.crouch=!!keys['s'];
 if(p1.onGround){
@@ -582,6 +647,32 @@ if(keys['w']&&p1.onGround&&!p1.block&&!p1.crouch){
   p1.timer=10;
 }
 if(keys['f'])doAttack(p1,cpu,'punch');if(keys['g'])doAttack(p1,cpu,'kick');if(keys['h']&&p1.specialCool<=0)doAttack(p1,cpu,'special');
+// Practice mode: fixed dummy, no AI, no timer and unlimited health.
+if(currentMode==='practice'){
+  cpu.x=720;cpu.y=GROUND;cpu.vx=0;cpu.vy=0;cpu.hp=100;cpu.action='stand';cpu.block=false;cpu.crouch=false;
+  if(cpu.wobble>0){cpu.wobble*=.84;if(cpu.wobble<.25)cpu.wobble=0;}
+  if(practiceComboTimer>0)practiceComboTimer--;
+  else practiceCombo=0;
+
+  p1.facing=p1.x<cpu.x?1:-1;
+  p1.x+=p1.vx;p1.y+=p1.vy;
+  if(!p1.onGround)p1.vy+=.68;
+  if(p1.y>=GROUND){p1.y=GROUND;p1.vy=0;p1.onGround=true;}
+  p1.x=clamp(p1.x,78,W-78);
+
+  // Keep the grounded player on the near side of the fixed target.
+  if(p1.onGround&&p1.x>cpu.x-82)p1.x=cpu.x-82;
+
+  if(p1.timer<=0){
+    if(!p1.onGround)p1.action='jump';
+    else if(p1.block)p1.action='block';
+    else if(p1.crouch)p1.action='crouch';
+    else if(Math.abs(p1.vx)>0.15)p1.action='walk';
+    else p1.action='stand';
+  }
+  return;
+}
+
 // CPU brain - V36: harder defence/attack, still beatable
 const dist=p1.x-cpu.x;
 const absDist=Math.abs(dist);
@@ -630,7 +721,10 @@ const stages=[
   {name:'BOXING ARENA', key:'stageBoxing', track:'fightBoxing'}
 ];
 let selectedStage=0;
-function selectedStageImage(){return assets[stages[selectedStage].key]||assets.stage;}
+function selectedStageImage(){
+  if(currentMode==='practice')return assets.stagePractice||assets.stage;
+  return assets[stages[selectedStage].key]||assets.stage;
+}
 function canvasPoint(e){
   const rect=canvas.getBoundingClientRect();
   const cssW=rect.width, cssH=rect.height;
@@ -654,6 +748,20 @@ function handleStagePointer(e){
 }
 
 function drawStage(){ctx.drawImage(selectedStageImage(),0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,0,0,.03)');g.addColorStop(1,'rgba(0,0,0,.15)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+function drawPracticeDummy(d){
+  const img=assets.practiceDummy;
+  if(!img||!img.width)return;
+  const targetH=258,scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;
+  const wobble=d.wobble||0;
+  const angle=Math.sin(Date.now()/36)*wobble*.0045;
+  ctx.save();
+  ctx.translate(d.x,d.y+4);
+  ctx.rotate(angle);
+  if(d.hitFlash>0)ctx.globalAlpha=.58+Math.sin(Date.now()/25)*.32;
+  ctx.drawImage(img,-dw/2,-dh,dw,dh);
+  ctx.restore();
+  ctx.globalAlpha=1;
+}
 function bar(x,y,w,h,val){ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.strokeRect(x,y,w,h);ctx.fillStyle='#2a121a';ctx.fillRect(x+3,y+3,w-6,h-6);ctx.fillStyle=val>35?'#ffe35a':'#ff3d5a';ctx.fillRect(x+3,y+3,(w-6)*val/100,h-6);}
 function drawRoundPips(x,y,count){
   ctx.save();
@@ -686,7 +794,52 @@ function drawSpecialMeter(f,x,y,w,alignRight=false){
   ctx.fillRect(x+2,y+2,(w-4)*fill,6);
   ctx.restore();
 }
-function drawHUD(){ctx.save();ctx.font='26px Impact';ctx.fillStyle='#31c8ff';ctx.shadowColor='#31c8ff';ctx.shadowBlur=10;ctx.textAlign='left';ctx.fillText(p1.name,34,38);ctx.textAlign='right';ctx.fillText(cpu.name,W-34,38);ctx.shadowBlur=0;bar(34,52,350,22,p1.hp);bar(W-384,52,350,22,cpu.hp);drawSpecialMeter(p1,34,92,170,false);drawSpecialMeter(cpu,W-204,92,170,true);drawRoundPips(52,122,p1Rounds);drawRoundPips(W-116,122,cpuRounds);
+function drawPracticeHUD(){
+  ctx.save();
+  ctx.fillStyle='rgba(2,8,18,.72)';
+  ctx.fillRect(18,16,310,112);
+  ctx.fillRect(W-328,16,310,112);
+
+  ctx.textAlign='left';
+  ctx.font='25px Impact';
+  ctx.fillStyle='#31c8ff';
+  ctx.shadowColor='#31c8ff';
+  ctx.shadowBlur=10;
+  ctx.fillText(p1.name,34,42);
+  ctx.shadowBlur=0;
+  drawSpecialMeter(p1,34,66,180,false);
+
+  ctx.textAlign='center';
+  ctx.font='31px Impact';
+  ctx.fillStyle='#8cff3f';
+  ctx.shadowColor='#55ff22';
+  ctx.shadowBlur=12;
+  ctx.fillText('PRACTICE MODE',W/2,40);
+  ctx.shadowBlur=0;
+  ctx.font='14px Arial';
+  ctx.fillStyle='rgba(255,255,255,.88)';
+  ctx.fillText('NO TIMER  •  NO K.O.  •  SPECIAL ALWAYS READY',W/2,64);
+
+  ctx.textAlign='right';
+  ctx.font='24px Impact';
+  ctx.fillStyle='#ff4fcf';
+  ctx.fillText('TRAINING DUMMY',W-34,42);
+  ctx.font='17px Impact';
+  ctx.fillStyle='#fff';
+  ctx.fillText('HITS  '+practiceHits,W-34,70);
+  ctx.fillText('DAMAGE  '+practiceDamage,W-34,94);
+  ctx.fillStyle=practiceCombo>1?'#ffe35a':'rgba(255,255,255,.72)';
+  ctx.fillText('COMBO  '+practiceCombo+'   BEST  '+practiceBestCombo,W-34,118);
+
+  ctx.textAlign='center';
+  ctx.font='14px Arial';
+  ctx.fillStyle=muted?'#ff8a8a':'#9dffca';
+  ctx.fillText(muted?'SOUND OFF (M)':'SOUND ON (M)  •  R RESETS PRACTICE',W/2,139);
+  ctx.restore();
+}
+function drawHUD(){
+if(currentMode==='practice'){drawPracticeHUD();return;}
+ctx.save();ctx.font='26px Impact';ctx.fillStyle='#31c8ff';ctx.shadowColor='#31c8ff';ctx.shadowBlur=10;ctx.textAlign='left';ctx.fillText(p1.name,34,38);ctx.textAlign='right';ctx.fillText(cpu.name,W-34,38);ctx.shadowBlur=0;bar(34,52,350,22,p1.hp);bar(W-384,52,350,22,cpu.hp);drawSpecialMeter(p1,34,92,170,false);drawSpecialMeter(cpu,W-204,92,170,true);drawRoundPips(52,122,p1Rounds);drawRoundPips(W-116,122,cpuRounds);
 ctx.textAlign='center';ctx.font='18px Impact';ctx.fillStyle='#fff';ctx.fillText('TIME',W/2,34);ctx.font='46px Impact';ctx.fillStyle='#ffe35a';ctx.shadowColor='#ff9e00';ctx.shadowBlur=10;ctx.fillText(Math.ceil(roundTime),W/2,78);ctx.shadowBlur=0;ctx.font='22px Impact';ctx.fillStyle='#ff3ddb';ctx.fillText(stages[selectedStage].name+' STAGE',W/2,111);ctx.font='15px Arial';ctx.fillStyle=muted?'#ff8a8a':'#9dffca';ctx.fillText(muted?'SOUND OFF (M)':'SOUND ON (M)  MUSIC ACTIVE',W/2,132);ctx.restore();}
 function currentImage(f){return charAsset(f,f.action)||charAsset(f,'stand');}
 function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
@@ -945,10 +1098,11 @@ function drawTournamentChoice(){
 }
 function handleModePointer(e){
   initAudio(false);const p=canvasPoint(e),x=p.x,y=p.y;
-  // Invisible hit zones aligned to the artwork panels.
-  if(x>=70&&x<=475&&y>=210&&y<=425){startQuickMatch();return;}
-  if(x>=485&&x<=890&&y>=210&&y<=425){openTournamentModeChoice();return;}
-  if(x>=285&&x<=675&&y>=430&&y<=525){gameState='title';return;}
+  // Invisible hit zones aligned to the new three-panel artwork.
+  if(x>=110&&x<=345&&y>=135&&y<=425){startPracticeMode();return;}
+  if(x>=350&&x<=605&&y>=135&&y<=425){startQuickMatch();return;}
+  if(x>=610&&x<=840&&y>=135&&y<=425){openTournamentModeChoice();return;}
+  if(x>=350&&x<=610&&y>=435&&y<=510){gameState='title';return;}
 }
 function handleTournamentChoicePointer(e){
   initAudio(false);const p=canvasPoint(e),x=p.x,y=p.y;
@@ -1252,7 +1406,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V85...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V86...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1264,12 +1418,12 @@ if(gameState==='tournamentLadder'){drawTournamentLadder();requestAnimationFrame(
 if(gameState==='tournamentEnding'){drawTournamentEnding();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentWin'){drawTournamentEnd(true);requestAnimationFrame(loop);return;}
 if(gameState==='tournamentOver'){drawTournamentEnd(false);requestAnimationFrame(loop);return;}
-update(dt);drawStage();drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();requestAnimationFrame(loop);}requestAnimationFrame(loop);
+update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else drawFighter(cpu);drawFighter(p1);drawHUD();drawOverlay();requestAnimationFrame(loop);}requestAnimationFrame(loop);
 </script>
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V85 Ciera kick scale and dance-note special -->
+<!-- Beatz Brawl V86 Full Practice Mode -->
 </html>
 
 <!-- V44 Emma scale tune -->
