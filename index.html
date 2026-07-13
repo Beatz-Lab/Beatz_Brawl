@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V86: Full Practice Mode -->
+<!-- Beatz Brawl V87: Beatz jump and crouch alignment tune -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V86 - Full Practice Mode
+// Beatz Brawl V87 - Beatz jump and crouch alignment tune
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -846,7 +846,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   // Each character's generated PNGs have slightly different internal scale.
   // These target heights keep upright actions from shrinking while still letting crouch/jump look correct.
   const spriteH={
-    beatz:{stand:217,walk:217,punch:217,kick:247,block:217,crouch:123,special:217,jump:222},
+    beatz:{stand:217,walk:217,punch:217,kick:247,block:217,crouch:123,special:217,jump:232},
     gary:{stand:253,walk:271,punch:273,kick:270,block:263,crouch:247,special:273,jump:287},
     emma:{stand:203,walk:241,punch:235,kick:243,block:198,crouch:161,special:278,jump:207},
     paige:{stand:243,walk:241,punch:235,kick:233,block:213,crouch:223,special:260,jump:237},
@@ -858,7 +858,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
   };
   let targetH=(spriteH[characters[f.charId].assetPrefix]&&spriteH[characters[f.charId].assetPrefix][f.action])||178;
   const yOffset={
-    beatz:{crouch:10,special:5},
+    beatz:{crouch:-5,special:5},
     gary:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:30,special:30,jump:20},
     emma:{walk:15,punch:15,kick:15,special:15},
     paige:{stand:15,walk:15,punch:15,kick:15,block:15,crouch:35,special:15,jump:15},
@@ -1406,7 +1406,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V86...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V87...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1423,7 +1423,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V86 Full Practice Mode -->
+<!-- Beatz Brawl V87 Beatz jump and crouch alignment tune -->
 </html>
 
 <!-- V44 Emma scale tune -->
