@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V93: Aimee pom special height tune -->
+<!-- Beatz Brawl V94: Mobile startup and audio loading fix -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V93 - Aimee pom special height tune
+// Beatz Brawl V94 - Mobile startup and audio loading fix
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -97,8 +97,15 @@ tracks.fightPractice.loop=true;tracks.fightPractice.volume=0.36;tracks.fightPrac
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
 tracks.vs.loop=true;tracks.vs.volume=0.48;tracks.vs.preload='auto';
 tracks.beatzWin.loop=true;tracks.beatzWin.volume=0.50;tracks.beatzWin.preload='auto';
-// Mobile browsers are strict with audio. Set these early and explicitly load the files.
-Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsinline','');t.load();}catch(e){}});
+// Mobile-safe audio setup: do not download every MP3 during startup.
+// Each track loads only when the player enters a screen that needs it.
+Object.values(tracks).forEach(t=>{
+  try{
+    t.playsInline=true;
+    t.setAttribute('playsinline','');
+    t.preload='none';
+  }catch(e){}
+});
 let activeTrack=null;
 const assets={};
 const files={
@@ -117,25 +124,78 @@ const files={
 };
 const total=Object.keys(files).length;
 const missingAssets=[];
-for(const [k,src] of Object.entries(files)){
-  const img=new Image();
+const coreAssetKeys=['title','modeSelect'];
+let coreLoaded=0;
+const coreTotal=coreAssetKeys.length;
+let backgroundQueue=[];
+let activeBackgroundLoads=0;
+const MAX_BACKGROUND_LOADS=3;
+
+function loadImageAsset(k,src,isCore=false){
+  const img=assets[k]||new Image();
+  assets[k]=img;
+
   let settled=false;
   const finish=(ok)=>{
     if(settled)return;
     settled=true;
     clearTimeout(timeout);
+
     if(!ok){
       missingAssets.push(src);
       console.warn('Beatz Brawl asset failed to load:',src);
     }
+
     loaded++;
+    if(isCore)coreLoaded++;
+    else{
+      activeBackgroundLoads=Math.max(0,activeBackgroundLoads-1);
+      pumpBackgroundAssets();
+    }
   };
+
   img.onload=()=>finish(true);
   img.onerror=()=>finish(false);
-  const timeout=setTimeout(()=>finish(false),12000);
+  const timeout=setTimeout(()=>finish(false),15000);
   img.src=src;
-  assets[k]=img;
 }
+
+function pumpBackgroundAssets(){
+  while(activeBackgroundLoads<MAX_BACKGROUND_LOADS&&backgroundQueue.length){
+    const [k,src]=backgroundQueue.shift();
+    activeBackgroundLoads++;
+    loadImageAsset(k,src,false);
+  }
+}
+
+// Create all image objects immediately so existing asset lookups remain safe.
+for(const k of Object.keys(files))assets[k]=new Image();
+
+// Load only the title/menu artwork first.
+for(const k of coreAssetKeys)loadImageAsset(k,files[k],true);
+
+// Prioritise standing previews and stage artwork, then load everything else.
+const priorityKeys=[
+  'stage','stageNightclub','stageOutside','stageCoventry','stageWembley',
+  'stageConcert','stageEarlsdon','stageBoxing','stagePractice','practiceDummy',
+  ...Object.keys(files).filter(k=>k.endsWith('_stand'))
+];
+const queued=new Set(coreAssetKeys);
+for(const k of priorityKeys){
+  if(files[k]&&!queued.has(k)){
+    backgroundQueue.push([k,files[k]]);
+    queued.add(k);
+  }
+}
+for(const [k,src] of Object.entries(files)){
+  if(!queued.has(k)){
+    backgroundQueue.push([k,src]);
+    queued.add(k);
+  }
+}
+
+// Begin gradual background loading without blocking the title screen.
+pumpBackgroundAssets();
 const characters=[
   {id:'beatz',name:'BEATZ',specialName:'Bass Shockwave',effect:'blue',assetPrefix:'beatz'},
   {id:'gary',name:'GARY',specialName:'Gary Dance Fire',effect:'fire',assetPrefix:'gary'},
@@ -418,6 +478,9 @@ function playTrack(name){
   Object.values(tracks).forEach(t=>{if(t!==next)t.pause();});
   activeTrack=next;
   next.muted=false;
+  try{
+    if(next.readyState===0)next.load();
+  }catch(e){}
   if(next.paused)next.play().catch(()=>{});
 }
 function forcePlayTrack(name){
@@ -427,7 +490,10 @@ function forcePlayTrack(name){
   Object.values(tracks).forEach(t=>{if(t!==next)t.pause();});
   activeTrack=next;
   next.muted=false;
-  try{next.currentTime=0;}catch(e){}
+  try{
+    if(next.readyState===0)next.load();
+    next.currentTime=0;
+  }catch(e){}
   const attempt=()=>next.play().catch(()=>{});
   attempt();
   setTimeout(()=>{if(gameState==='title'&&titleAudioReady&&!muted&&next.paused)attempt();},180);
@@ -793,7 +859,24 @@ function handleStagePointer(e){
   if(x>=W/2-260&&x<=W/2+260&&y>=132&&y<=392){prepareVsScreen();return;}
 }
 
-function drawStage(){ctx.drawImage(selectedStageImage(),0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,0,0,.03)');g.addColorStop(1,'rgba(0,0,0,.15)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+function drawStage(){
+  const img=selectedStageImage();
+  if(img&&img.complete&&img.naturalWidth>0){
+    ctx.drawImage(img,0,0,W,H);
+  }else{
+    const fallback=ctx.createLinearGradient(0,0,W,H);
+    fallback.addColorStop(0,'#102a44');
+    fallback.addColorStop(.55,'#07162a');
+    fallback.addColorStop(1,'#02040a');
+    ctx.fillStyle=fallback;
+    ctx.fillRect(0,0,W,H);
+  }
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(0,0,0,.03)');
+  g.addColorStop(1,'rgba(0,0,0,.15)');
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+}
 function drawPracticeDummy(d){
   const img=assets.practiceDummy;
   if(!img||!img.width)return;
@@ -1587,7 +1670,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V93...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(coreLoaded<coreTotal){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V94...',W/2,H/2);ctx.font='15px Arial';ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillText('Preparing menu...',W/2,H/2+34);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1605,7 +1688,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V93 Aimee pom special height tune -->
+<!-- Beatz Brawl V94 Mobile startup and audio loading fix -->
 </html>
 
 <!-- V44 Emma scale tune -->
