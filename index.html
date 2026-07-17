@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V95: Sunit fighter, temple stage and five-fight tournament -->
+<!-- Beatz Brawl V96: Paul fighter and wedding stage -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V95 - Sunit fighter, temple stage and five-fight tournament
+// Beatz Brawl V96 - Paul fighter and wedding stage
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -80,6 +80,7 @@ const tracks={
   fightBoxing:new Audio('assets/audio/fight_boxing.mp3?v=84'),
   fightPractice:new Audio('assets/audio/fight_practice.mp3?v=86'),
   fightTemple:new Audio('assets/audio/fight_temple.mp3?v=95'),
+  fightWedding:new Audio('assets/audio/fight_wedding.mp3?v=96'),
   stage:new Audio('assets/audio/stage_select_theme.mp3'),
   vs:new Audio('assets/audio/vs_theme.mp3'),
   beatzWin:new Audio('assets/audio/beatz_win.mp3?v=68')
@@ -96,6 +97,7 @@ tracks.fightEarlsdon.loop=true;tracks.fightEarlsdon.volume=0.36;tracks.fightEarl
 tracks.fightBoxing.loop=true;tracks.fightBoxing.volume=0.36;tracks.fightBoxing.preload='auto';
 tracks.fightPractice.loop=true;tracks.fightPractice.volume=0.36;tracks.fightPractice.preload='auto';
 tracks.fightTemple.loop=true;tracks.fightTemple.volume=0.36;tracks.fightTemple.preload='auto';
+tracks.fightWedding.loop=true;tracks.fightWedding.volume=0.36;tracks.fightWedding.preload='auto';
 tracks.stage.loop=true;tracks.stage.volume=0.46;tracks.stage.preload='auto';
 tracks.vs.loop=true;tracks.vs.volume=0.48;tracks.vs.preload='auto';
 tracks.beatzWin.loop=true;tracks.beatzWin.volume=0.50;tracks.beatzWin.preload='auto';
@@ -104,7 +106,7 @@ Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsin
 let activeTrack=null;
 const assets={};
 const files={
- stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',stageTemple:'assets/stages/stage_temple.png?v=95',stagePractice:'assets/stages/stage_practice.png?v=86',practiceDummy:'assets/ui/practice_dummy.png?v=86',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png?v=86',
+ stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',stageTemple:'assets/stages/stage_temple.png?v=95',stageWedding:'assets/stages/stage_wedding.png?v=96',stagePractice:'assets/stages/stage_practice.png?v=86',practiceDummy:'assets/ui/practice_dummy.png?v=86',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png?v=86',
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png?v=81',gary_walk:'assets/characters/gary/gary_walk.png?v=81',gary_punch:'assets/characters/gary/gary_punch.png?v=81',gary_kick:'assets/characters/gary/gary_kick.png?v=81',gary_block:'assets/characters/gary/gary_block.png?v=81',gary_crouch:'assets/characters/gary/gary_crouch.png?v=81',gary_special:'assets/characters/gary/gary_special.png?v=81',gary_jump:'assets/characters/gary/gary_jump.png?v=81',
@@ -116,7 +118,8 @@ const files={
  beth_stand:'assets/characters/beth/beth_stand.png?v=74',beth_walk:'assets/characters/beth/beth_walk.png?v=74',beth_punch:'assets/characters/beth/beth_punch.png?v=74',beth_kick:'assets/characters/beth/beth_kick.png?v=74',beth_block:'assets/characters/beth/beth_block.png?v=74',beth_crouch:'assets/characters/beth/beth_crouch.png?v=74',beth_special:'assets/characters/beth/beth_special.png?v=74',beth_jump:'assets/characters/beth/beth_jump.png?v=74',
  wardy_stand:'assets/characters/wardy/wardy_stand.png?v=77',wardy_walk:'assets/characters/wardy/wardy_walk.png?v=77',wardy_punch:'assets/characters/wardy/wardy_punch.png?v=77',wardy_kick:'assets/characters/wardy/wardy_kick.png?v=77',wardy_block:'assets/characters/wardy/wardy_block.png?v=77',wardy_crouch:'assets/characters/wardy/wardy_crouch.png?v=77',wardy_special:'assets/characters/wardy/wardy_special.png?v=77',wardy_jump:'assets/characters/wardy/wardy_jump.png?v=77',
  ciera_stand:'assets/characters/ciera/ciera_stand.png?v=84',ciera_walk:'assets/characters/ciera/ciera_walk.png?v=84',ciera_punch:'assets/characters/ciera/ciera_punch.png?v=84',ciera_kick:'assets/characters/ciera/ciera_kick.png?v=84',ciera_block:'assets/characters/ciera/ciera_block.png?v=84',ciera_crouch:'assets/characters/ciera/ciera_crouch.png?v=84',ciera_special:'assets/characters/ciera/ciera_special.png?v=85',ciera_jump:'assets/characters/ciera/ciera_jump.png?v=84',
- sunit_stand:'assets/characters/sunit/sunit_stand.png?v=95',sunit_walk:'assets/characters/sunit/sunit_walk.png?v=95',sunit_punch:'assets/characters/sunit/sunit_punch.png?v=95',sunit_kick:'assets/characters/sunit/sunit_kick.png?v=95',sunit_block:'assets/characters/sunit/sunit_block.png?v=95',sunit_crouch:'assets/characters/sunit/sunit_crouch.png?v=95',sunit_special:'assets/characters/sunit/sunit_special.png?v=95',sunit_jump:'assets/characters/sunit/sunit_jump.png?v=95'
+ sunit_stand:'assets/characters/sunit/sunit_stand.png?v=95',sunit_walk:'assets/characters/sunit/sunit_walk.png?v=95',sunit_punch:'assets/characters/sunit/sunit_punch.png?v=95',sunit_kick:'assets/characters/sunit/sunit_kick.png?v=95',sunit_block:'assets/characters/sunit/sunit_block.png?v=95',sunit_crouch:'assets/characters/sunit/sunit_crouch.png?v=95',sunit_special:'assets/characters/sunit/sunit_special.png?v=95',sunit_jump:'assets/characters/sunit/sunit_jump.png?v=95',
+ paul_stand:'assets/characters/paul/paul_stand.png?v=96',paul_walk:'assets/characters/paul/paul_walk.png?v=96',paul_punch:'assets/characters/paul/paul_punch.png?v=96',paul_kick:'assets/characters/paul/paul_kick.png?v=96',paul_block:'assets/characters/paul/paul_block.png?v=96',paul_crouch:'assets/characters/paul/paul_crouch.png?v=96',paul_special:'assets/characters/paul/paul_special.png?v=96',paul_jump:'assets/characters/paul/paul_jump.png?v=96'
 };
 const total=Object.keys(files).length;
 const missingAssets=[];
@@ -149,7 +152,8 @@ const characters=[
   {id:'beth',name:'BETH',specialName:'Pink Outlaw Blast',effect:'sprite',assetPrefix:'beth'},
   {id:'wardy',name:'WARDY',specialName:'Festival Split Storm',effect:'wardy',assetPrefix:'wardy'},
   {id:'ciera',name:'CIERA',specialName:'Pink Dance Crescendo',effect:'ciera',assetPrefix:'ciera'},
-  {id:'sunit',name:'SUNIT',specialName:'Bollywood Firestorm',effect:'sprite',assetPrefix:'sunit'}
+  {id:'sunit',name:'SUNIT',specialName:'Bollywood Firestorm',effect:'sprite',assetPrefix:'sunit'},
+  {id:'paul',name:'PAUL',specialName:'Perfect Shot',effect:'sprite',assetPrefix:'paul'}
 ];
 const AIMEE_INDEX=characters.findIndex(ch=>ch.id==='aimee');
 let selectedAimeeOutfit='classic'; // classic | poms
@@ -770,7 +774,8 @@ const stages=[
   {name:'CREW GIRLS CONCERT', key:'stageConcert', track:'fightConcert'},
   {name:'EARLSDON FESTIVAL', key:'stageEarlsdon', track:'fightEarlsdon'},
   {name:'BOXING ARENA', key:'stageBoxing', track:'fightBoxing'},
-  {name:'SUNIT TEMPLE', key:'stageTemple', track:'fightTemple'}
+  {name:'SUNIT TEMPLE', key:'stageTemple', track:'fightTemple'},
+  {name:'WEDDING CHAOS', key:'stageWedding', track:'fightWedding'}
 ];
 let selectedStage=0;
 function selectedStageImage(){
@@ -908,7 +913,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     beth:{stand:243,walk:258,punch:238,kick:263,block:238,crouch:213,special:293,jump:243},
     wardy:{stand:235,walk:250,punch:247,kick:262,block:247,crouch:245,special:293,jump:270},
     ciera:{stand:245,walk:250,punch:255,kick:280,block:245,crouch:235,special:285,jump:270},
-    sunit:{stand:253,walk:258,punch:258,kick:270,block:253,crouch:225,special:280,jump:270}
+    sunit:{stand:253,walk:258,punch:258,kick:270,block:253,crouch:225,special:280,jump:270},
+    paul:{stand:238,walk:243,punch:253,kick:258,block:243,crouch:220,special:270,jump:258}
   };
   const spriteProfile=(characters[f.charId].id==='aimee'&&f.outfit==='poms')?'aimee_poms':characters[f.charId].assetPrefix;
   let targetH=(spriteH[spriteProfile]&&spriteH[spriteProfile][f.action])||178;
@@ -923,7 +929,8 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     beth:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:35,special:10,jump:10},
     wardy:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:25,special:-10,jump:10},
     ciera:{stand:27,walk:31,punch:36,kick:39,block:35,crouch:60,special:20,jump:47},
-    sunit:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:45,special:5,jump:25}
+    sunit:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:45,special:5,jump:25},
+    paul:{stand:25,walk:25,punch:25,kick:25,block:25,crouch:50,special:10,jump:30}
   };
   const poseYOffset=(yOffset[spriteProfile]&&yOffset[spriteProfile][f.action])||0;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh+poseYOffset;if(f.action==='jump')dy=f.y-dh-14+poseYOffset;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
@@ -1595,7 +1602,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V95...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V96...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1613,7 +1620,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V95 Sunit fighter, temple stage and five-fight tournament -->
+<!-- Beatz Brawl V96 Paul fighter and wedding stage -->
 </html>
 
 <!-- V44 Emma scale tune -->
