@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V96: Paul fighter and wedding stage -->
+<!-- Beatz Brawl V98: Paul all-pose height adjustment -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V96 - Paul fighter and wedding stage
+// Beatz Brawl V98 - Paul all-pose height adjustment
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -153,7 +153,7 @@ const characters=[
   {id:'wardy',name:'WARDY',specialName:'Festival Split Storm',effect:'wardy',assetPrefix:'wardy'},
   {id:'ciera',name:'CIERA',specialName:'Pink Dance Crescendo',effect:'ciera',assetPrefix:'ciera'},
   {id:'sunit',name:'SUNIT',specialName:'Bollywood Firestorm',effect:'sprite',assetPrefix:'sunit'},
-  {id:'paul',name:'PAUL',specialName:'Perfect Shot',effect:'sprite',assetPrefix:'paul'}
+  {id:'paul',name:'PAUL',specialName:'Perfect Shot',effect:'paul',assetPrefix:'paul'}
 ];
 const AIMEE_INDEX=characters.findIndex(ch=>ch.id==='aimee');
 let selectedAimeeOutfit='classic'; // classic | poms
@@ -930,7 +930,7 @@ function drawFighter(f){const img=currentImage(f);if(!img||!img.width)return;
     wardy:{stand:10,walk:10,punch:10,kick:10,block:10,crouch:25,special:-10,jump:10},
     ciera:{stand:27,walk:31,punch:36,kick:39,block:35,crouch:60,special:20,jump:47},
     sunit:{stand:20,walk:20,punch:20,kick:20,block:20,crouch:45,special:5,jump:25},
-    paul:{stand:25,walk:25,punch:25,kick:25,block:25,crouch:50,special:10,jump:30}
+    paul:{stand:15,walk:15,punch:15,kick:15,block:15,crouch:40,special:0,jump:20}
   };
   const poseYOffset=(yOffset[spriteProfile]&&yOffset[spriteProfile][f.action])||0;
   const scale=targetH/img.height,dw=img.width*scale,dh=img.height*scale;let dy=f.y-dh+poseYOffset;if(f.action==='jump')dy=f.y-dh-14+poseYOffset;if(f.hitFlash>0)ctx.globalAlpha=.65+Math.sin(Date.now()/28)*.28;ctx.save();
@@ -1116,6 +1116,105 @@ function drawSpecialEffect(f){
       ctx.beginPath();
       ctx.arc(sx,sy,2.5+(i%3),0,Math.PI*2);
       ctx.fill();
+    }
+  }else if(ch.effect==='paul'){
+    const now=Date.now();
+    const dir=f.facing;
+    const progress=clamp((SPECIAL_POSE_TIMER-f.timer)/24,0,1);
+    const pulse=1+Math.sin(now/55)*.08;
+
+    ctx.globalAlpha=.98;
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
+
+    // Bright camera flare close to Paul's hands/camera.
+    const flashX=clamp(f.x+dir*46,34,W-34);
+    const flashY=clamp(f.y-132,34,H-34);
+    const flashGrad=ctx.createRadialGradient(
+      flashX,flashY,2,
+      flashX,flashY,36*pulse
+    );
+    flashGrad.addColorStop(0,'rgba(255,255,255,1)');
+    flashGrad.addColorStop(.22,'rgba(255,255,255,.98)');
+    flashGrad.addColorStop(.55,'rgba(224,242,255,.72)');
+    flashGrad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=flashGrad;
+    ctx.beginPath();
+    ctx.arc(flashX,flashY,36*pulse,0,Math.PI*2);
+    ctx.fill();
+
+    // Short white flash rays. Kept inside the special's real hit range.
+    ctx.shadowColor='#ffffff';
+    ctx.shadowBlur=15;
+    ctx.strokeStyle='rgba(255,255,255,.96)';
+    for(let i=0;i<7;i++){
+      const angle=-.72+i*.24;
+      const inner=14;
+      const outer=34+(i%2)*10;
+      ctx.lineWidth=i%2?3:5;
+      ctx.beginPath();
+      ctx.moveTo(
+        flashX+Math.cos(angle)*inner*dir,
+        flashY+Math.sin(angle)*inner
+      );
+      ctx.lineTo(
+        flashX+Math.cos(angle)*outer*dir,
+        flashY+Math.sin(angle)*outer
+      );
+      ctx.stroke();
+    }
+
+    // White camera-flash stars travel toward the opponent.
+    // Their farthest point matches Paul's approximately 175px special hitbox.
+    const starCount=6;
+    for(let i=0;i<starCount;i++){
+      const lane=(i+1)/(starCount+1);
+      const travel=38+lane*122+progress*8;
+      const sx=clamp(f.x+dir*travel,18,W-18);
+      const sy=clamp(
+        f.y-141+Math.sin(now/90+i*1.65)*17+(i%2?8:-8),
+        18,H-18
+      );
+      const radius=5+(i%3)*2;
+      const flicker=.76+.24*Math.sin(now/45+i*2.1);
+
+      ctx.save();
+      ctx.translate(sx,sy);
+      ctx.rotate(now/700+i*.5);
+      ctx.globalAlpha=.72+.28*flicker;
+      ctx.shadowColor='#ffffff';
+      ctx.shadowBlur=13;
+      ctx.fillStyle=i%2?'rgba(255,255,255,.98)':'rgba(220,241,255,.96)';
+
+      ctx.beginPath();
+      for(let p=0;p<8;p++){
+        const a=p*Math.PI/4;
+        const r=p%2===0?radius*1.9:radius*.55;
+        const px=Math.cos(a)*r;
+        const py=Math.sin(a)*r;
+        if(p===0)ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // A restrained white trail ties the visible effect to the damage reach.
+    ctx.shadowColor='#dff5ff';
+    ctx.shadowBlur=10;
+    ctx.strokeStyle='rgba(238,250,255,.58)';
+    ctx.lineWidth=3;
+    for(let i=-1;i<=1;i++){
+      ctx.beginPath();
+      ctx.moveTo(flashX+dir*18,flashY+i*8);
+      ctx.quadraticCurveTo(
+        f.x+dir*105,
+        flashY+i*15+Math.sin(now/120+i)*5,
+        f.x+dir*168,
+        flashY+i*7
+      );
+      ctx.stroke();
     }
   }else if(ch.effect==='blue'){
     const now=Date.now();
@@ -1602,7 +1701,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V96...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V98...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1620,7 +1719,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V96 Paul fighter and wedding stage -->
+<!-- Beatz Brawl V98 Paul all-pose height adjustment -->
 </html>
 
 <!-- V44 Emma scale tune -->
