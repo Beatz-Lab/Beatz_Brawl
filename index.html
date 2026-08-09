@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V99: Lem tournament ending -->
+<!-- Beatz Brawl V100: shared ending audio fix + continuous match music -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V99 - Lem tournament ending
+// Beatz Brawl V100 - shared ending audio fix + continuous match music
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -186,7 +186,7 @@ function startTournamentEnding(){
   endingSceneStarted=performance.now();
   gameState='tournamentEnding';
   initAudio(false);
-  restartTrack('beatzWin');
+  forcePlayTrack('beatzWin');
 }
 function advanceTournamentEnding(){
   const scenes=activeTournamentEnding();
@@ -528,7 +528,6 @@ function resetRound(){
   }
   roundTime=99;roundOver=false;winner='';paused=false;
   keys['f']=keys['g']=keys['h']=false;
-  if(gameState==='fight'&&!muted){restartTrack(currentFightTrack());}
 }
 function goModeMenu(){gameState='mode';titleAudioReady=true;initAudio(true);playTrack('menu');}
 function startPracticeMode(){currentMode='practice';goSelect();}
@@ -564,8 +563,18 @@ function backFromStageSelect(){
 function goStageSelect(){gameState='stage';initAudio(true);restartTrack('stage');}
 function chooseRandomEnemy(){const choices=characters.map((_,i)=>i).filter(i=>i!==selectedFighter);selectedEnemy=choices[Math.floor(Math.random()*choices.length)]||((selectedFighter+1)%characters.length);}
 function prepareVsScreen(){chooseRandomEnemy();gameState='vs';initAudio(true);restartTrack('vs');}
-function startFight(){gameState='fight';startNewMatch();initAudio(true);restartTrack(currentFightTrack());}
-function startPracticeFight(){gameState='fight';startNewMatch();initAudio(true);restartTrack('fightPractice');}
+function startFight(){
+  gameState='fight';
+  startNewMatch();
+  initAudio(false);
+  restartTrack(currentFightTrack());
+}
+function startPracticeFight(){
+  gameState='fight';
+  startNewMatch();
+  initAudio(false);
+  restartTrack('fightPractice');
+}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function hurtBox(f){const crouch=f.action==='crouch'||f.action==='block';return{x:f.x-f.w/2,y:f.y-(crouch?118:f.h),w:f.w,h:crouch?118:f.h};}
 function attackBox(f,type){const range=type==='special'?175:type==='kick'?108:86;const height=type==='kick'?58:76;const y=type==='kick'?f.y-118:f.y-142;return{x:f.facing===1?f.x+26:f.x-26-range,y,w:range,h:height};}
@@ -1708,7 +1717,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V99...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V100...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1726,7 +1735,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V99 Lem tournament ending -->
+<!-- Beatz Brawl V100 shared ending audio fix + continuous match music -->
 </html>
 
 <!-- V44 Emma scale tune -->
