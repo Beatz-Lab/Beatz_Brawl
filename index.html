@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V101: robust tournament ending audio -->
+<!-- Beatz Brawl V103: packaged tournament ending audio -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V101 - robust tournament ending audio
+// Beatz Brawl V103 - packaged tournament ending audio
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -83,7 +83,7 @@ const tracks={
   fightWedding:new Audio('assets/audio/fight_wedding.mp3?v=96'),
   stage:new Audio('assets/audio/stage_select_theme.mp3'),
   vs:new Audio('assets/audio/vs_theme.mp3'),
-  beatzWin:new Audio('assets/audio/beatz_win.mp3?v=101')
+  beatzWin:new Audio('assets/audio/beatz_win.mp3?v=103')
 };
 tracks.menu.loop=true;tracks.menu.volume=0.46;tracks.menu.preload='auto';
 tracks.select.loop=true;tracks.select.volume=0.46;tracks.select.preload='auto';
@@ -104,7 +104,6 @@ tracks.beatzWin.loop=true;tracks.beatzWin.volume=0.50;tracks.beatzWin.preload='a
 // Mobile browsers are strict with audio. Set these early and explicitly load the files.
 Object.values(tracks).forEach(t=>{try{t.playsInline=true;t.setAttribute('playsinline','');t.load();}catch(e){}});
 let activeTrack=null;
-let endingAudioRetryAt=0;
 const assets={};
 const files={
  stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',stageTemple:'assets/stages/stage_temple.png?v=95',stageWedding:'assets/stages/stage_wedding.png?v=96',stagePractice:'assets/stages/stage_practice.png?v=86',practiceDummy:'assets/ui/practice_dummy.png?v=86',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png?v=86',
@@ -187,24 +186,16 @@ function startTournamentEnding(){
   endingSceneStarted=performance.now();
   gameState='tournamentEnding';
   initAudio(false);
-  startEndingMusic(true);
+  forcePlayTrack('beatzWin');
 }
 function advanceTournamentEnding(){
   const scenes=activeTournamentEnding();
   if(!scenes){gameState='tournamentWin';return;}
-  if(endingSceneIndex<scenes.length-1){
-    endingSceneIndex++;
-    endingSceneStarted=performance.now();
-    ensureEndingMusic();
-  }
+  if(endingSceneIndex<scenes.length-1){endingSceneIndex++;endingSceneStarted=performance.now();}
   else goTitle();
 }
 function previousTournamentEnding(){
-  if(endingSceneIndex>0){
-    endingSceneIndex--;
-    endingSceneStarted=performance.now();
-    ensureEndingMusic();
-  }
+  if(endingSceneIndex>0){endingSceneIndex--;endingSceneStarted=performance.now();}
 }
 const TOURNAMENT_SAVE_KEY='beatzBrawlTournamentV5';
 const TOURNAMENT_FIGHT_COUNT=5;
@@ -428,70 +419,11 @@ function initAudio(startTrack=true){
   if(audioCtx.state==='suspended') audioCtx.resume();
   if(startTrack){
     if(gameState==='title'||gameState==='mode'||gameState==='tournamentChoice'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
-    if(gameState==='tournamentEnding') startEndingMusic(false);
+    if(gameState==='tournamentEnding') playTrack('beatzWin');
     if(gameState==='select'||gameState==='outfit') playTrack('select');
     if(gameState==='stage') playTrack('stage');
     if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
     if(gameState==='fight') playTrack(currentFightTrack());
-  }
-}
-function startEndingMusic(restart=false){
-  if(muted||gameState!=='tournamentEnding')return;
-  const t=tracks.beatzWin;
-  if(!t)return;
-
-  // The ending soundtrack owns the audio while the slideshow is active.
-  Object.values(tracks).forEach(other=>{if(other!==t)other.pause();});
-  activeTrack=t;
-  t.muted=false;
-  t.volume=0.50;
-  t.loop=true;
-
-  if(restart){
-    try{t.pause();}catch(e){}
-    try{t.currentTime=0;}catch(e){}
-    try{t.load();}catch(e){}
-  }
-
-  const playNow=()=>{
-    if(muted||gameState!=='tournamentEnding')return;
-    try{
-      const p=t.play();
-      if(p&&typeof p.catch==='function'){
-        p.catch(err=>{
-          console.warn('Beatz Brawl ending music play retry:',err);
-          endingAudioRetryAt=performance.now()+250;
-        });
-      }
-    }catch(err){
-      console.warn('Beatz Brawl ending music error:',err);
-      endingAudioRetryAt=performance.now()+250;
-    }
-  };
-
-  // Try immediately, then again as soon as the file is ready.
-  playNow();
-  if(t.readyState<2){
-    const onReady=()=>{
-      t.removeEventListener('canplay',onReady);
-      t.removeEventListener('loadeddata',onReady);
-      playNow();
-    };
-    t.addEventListener('canplay',onReady,{once:true});
-    t.addEventListener('loadeddata',onReady,{once:true});
-  }
-  endingAudioRetryAt=performance.now()+300;
-}
-function ensureEndingMusic(){
-  if(muted||gameState!=='tournamentEnding')return;
-  const t=tracks.beatzWin;
-  if(!t)return;
-  const now=performance.now();
-  if(activeTrack!==t||t.paused){
-    if(now>=endingAudioRetryAt){
-      startEndingMusic(false);
-      endingAudioRetryAt=now+350;
-    }
   }
 }
 function pauseAllMusic(){Object.values(tracks).forEach(t=>t.pause());}
@@ -527,7 +459,7 @@ function toggleMute(){
   if(muted){ pauseAllMusic(); }
   else {
     if(gameState==='title'||gameState==='mode'||gameState==='tournamentChoice'||gameState==='confirmNew'||gameState==='tournamentWin'||gameState==='tournamentOver') playTrack('menu');
-    if(gameState==='tournamentEnding') startEndingMusic(false);
+    if(gameState==='tournamentEnding') playTrack('beatzWin');
     if(gameState==='select') playTrack('select');
     if(gameState==='stage') playTrack('stage');
     if(gameState==='vs'||gameState==='tournamentLadder') playTrack('vs');
@@ -585,7 +517,7 @@ function sfx(name){
 
 function fighter(x,charId,cpu=false){const baseName=characters[charId].name;const outfit=(!cpu&&charId===AIMEE_INDEX)?selectedAimeeOutfit:'classic';return{x,y:GROUND,vx:0,vy:0,w:78,h:172,name:cpu?'CPU '+baseName:baseName,charId,cpu,outfit,hp:100,facing:cpu?-1:1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0};}
 function trainingDummy(x=720){return{x,y:GROUND,vx:0,vy:0,w:108,h:210,name:'TRAINING DUMMY',cpu:true,dummy:true,hp:100,facing:-1,action:'stand',timer:0,onGround:true,cool:0,specialCool:0,block:false,crouch:false,hitFlash:0,aiGuardTimer:0,aiCrouchTimer:0,wobble:0};}
-let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null; resetRound(false);
+let p1,cpu; let p1Rounds=0,cpuRounds=0,matchOver=false,roundWinnerSide=null,matchWinnerSide=null; resetRound(false);
 function resetRound(){
   p1=fighter(245,selectedFighter,false);
   if(currentMode==='practice'){
@@ -658,6 +590,7 @@ function startNewMatch(){
   cpuRounds=0;
   matchOver=false;
   roundWinnerSide=null;
+  matchWinnerSide=null;
   if(currentMode==='practice'){
     practiceHits=0;practiceDamage=0;practiceCombo=0;practiceBestCombo=0;practiceComboTimer=0;
   }
@@ -678,14 +611,15 @@ function finishRound(side){
   keys['f']=keys['g']=keys['h']=false;
   if(p1Rounds>=2 || cpuRounds>=2){
     matchOver=true;
-    winner=(p1Rounds>=2?p1.name+' WINS!':cpu.name+' WINS!');
+    matchWinnerSide=p1Rounds>=2?'p1':'cpu';
+    winner=(matchWinnerSide==='p1'?p1.name+' WINS!':cpu.name+' WINS!');
   }
 }
 function handleFightConfirm(){
   if(!roundOver) return;
   if(matchOver){
     if(currentMode==='tournament'&&validTournament(tournament)){
-      if(p1Rounds>=2){
+      if(matchWinnerSide==='p1'){
         tournament.currentRound++;
         if(tournament.currentRound>=tournament.opponents.length){
           clearTournament();
@@ -1699,7 +1633,6 @@ function drawWrappedText(text,x,y,maxWidth,lineHeight,maxLines=2){
   lines.slice(0,maxLines).forEach((part,i)=>ctx.fillText(part,x,y+i*lineHeight));
 }
 function drawTournamentEnding(){
-  ensureEndingMusic();
   const scenes=activeTournamentEnding();
   if(!scenes||!scenes.length){gameState='tournamentWin';return;}
   endingSceneIndex=clamp(endingSceneIndex,0,scenes.length-1);
@@ -1775,7 +1708,7 @@ function drawOverlay(){
   if(roundOver){
     if(matchOver) message(winner);
     else message(winner);
-    drawReturnButton(matchOver?(currentMode==='tournament'?(p1Rounds>=2?'CONTINUE':'TOURNAMENT OVER'):'RETURN TO MENU'):'NEXT ROUND');
+    drawReturnButton(matchOver?(currentMode==='tournament'?(matchWinnerSide==='p1'?'CONTINUE':'TOURNAMENT OVER'):'RETURN TO MENU'):'NEXT ROUND');
   }
 }
 function drawReturnButton(label){
@@ -1786,7 +1719,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V101...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V103...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1804,7 +1737,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V101 robust tournament ending audio -->
+<!-- Beatz Brawl V103 packaged tournament ending audio -->
 </html>
 
 <!-- V44 Emma scale tune -->
