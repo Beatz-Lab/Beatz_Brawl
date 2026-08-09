@@ -39,7 +39,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
 <!-- Beatz Brawl V35 - compact VS fight button -->
 <!-- Beatz Brawl V46 - special HUD spacing + green ready -->
 <!-- Beatz Brawl V57: artwork mode screen + clickable panels -->
-<!-- Beatz Brawl V98: Paul all-pose height adjustment -->
+<!-- Beatz Brawl V99: Lem tournament ending -->
 <!-- V49 Aimee scale + floor offset -->
 </head>
 <body>
@@ -54,7 +54,7 @@ canvas{width:100vw;height:auto;max-height:100vh;image-rendering:auto;box-shadow:
   </div>
 </div>
 <script>
-// Beatz Brawl V98 - Paul all-pose height adjustment
+// Beatz Brawl V99 - Lem tournament ending
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const W=canvas.width,H=canvas.height,GROUND=438;
@@ -108,6 +108,7 @@ const assets={};
 const files={
  stage:'assets/stage_clean.png',stageNightclub:'assets/stages/stage_nightclub.png',stageOutside:'assets/stages/stage_outside_hall.png',stageCoventry:'assets/stages/stage_coventry_transport.png',stageWembley:'assets/stages/stage_wembley_night.png',stageConcert:'assets/stages/stage_concert.png?v=74',stageEarlsdon:'assets/stages/stage_earlsdon.png?v=77',stageBoxing:'assets/stages/stage_boxing.png?v=84',stageTemple:'assets/stages/stage_temple.png?v=95',stageWedding:'assets/stages/stage_wedding.png?v=96',stagePractice:'assets/stages/stage_practice.png?v=86',practiceDummy:'assets/ui/practice_dummy.png?v=86',title:'assets/ui/title_screen.png',modeSelect:'assets/ui/mode_select_bg.png?v=86',
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
+ lemEnding1:'assets/endings/lem/lem_ending_1.png?v=99',lemEnding2:'assets/endings/lem/lem_ending_2.png?v=99',lemEnding3:'assets/endings/lem/lem_ending_3.png?v=99',lemEnding4:'assets/endings/lem/lem_ending_4.png?v=99',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png?v=81',gary_walk:'assets/characters/gary/gary_walk.png?v=81',gary_punch:'assets/characters/gary/gary_punch.png?v=81',gary_kick:'assets/characters/gary/gary_kick.png?v=81',gary_block:'assets/characters/gary/gary_block.png?v=81',gary_crouch:'assets/characters/gary/gary_crouch.png?v=81',gary_special:'assets/characters/gary/gary_special.png?v=81',gary_jump:'assets/characters/gary/gary_jump.png?v=81',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png?v=73',emma_crouch:'assets/characters/emma/emma_crouch.png?v=73',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png?v=73',
@@ -168,6 +169,12 @@ const tournamentEndings={
     {asset:'beatzEnding2',title:'THE ARENA FELL SILENT.',text:'The crowd waited for their champion to deliver an inspirational speech.'},
     {asset:'beatzEnding3',title:'BEATZ SAID NOTHING.',text:'He dropped the bass instead.'},
     {asset:'beatzEnding4',title:'BEATZ WINS',text:'The tournament ended. The party did not.'}
+  ],
+  lem:[
+    {asset:'lemEnding1',title:'LEM CONQUERED BEATZ BRAWL.',text:'After fighting her way through the tournament, Lem lifted the trophy as the new Beatz Brawl champion.'},
+    {asset:'lemEnding2',title:'NEXT STOP: MISS ENGLAND.',text:'With one title already secured, Lem packed her bags and boarded a plane for an entirely different kind of competition.'},
+    {asset:'lemEnding3',title:'MISS ENGLAND CHAMPION.',text:'The fighting gloves were gone, but the winning streak continued. Lem took the crown and became Miss England.'},
+    {asset:'lemEnding4',title:'MISS UNIVERSE.',text:'England was not enough. Lem went cosmic, defeated the competition from across the stars, and brought the Miss Universe crown home to Earth.'}
   ]
 };
 function activeTournamentEnding(){
@@ -1701,7 +1708,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V98...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V99...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
@@ -1719,7 +1726,7 @@ update(dt);drawStage();if(currentMode==='practice')drawPracticeDummy(cpu);else d
 </body>
 <!-- Beatz Brawl V47 Aimee scale tune -->
 <!-- Beatz Brawl V52 Beatz scale tune -->
-<!-- Beatz Brawl V98 Paul all-pose height adjustment -->
+<!-- Beatz Brawl V99 Lem tournament ending -->
 </html>
 
 <!-- V44 Emma scale tune -->
