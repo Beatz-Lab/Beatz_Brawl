@@ -110,6 +110,7 @@ const files={
  beatzEnding1:'assets/endings/beatz/beatz_ending_1.webp?v=60',beatzEnding2:'assets/endings/beatz/beatz_ending_2.webp?v=60',beatzEnding3:'assets/endings/beatz/beatz_ending_3.webp?v=60',beatzEnding4:'assets/endings/beatz/beatz_ending_4.webp?v=60',
  lemEnding1:'assets/endings/lem/lem_ending_1.png?v=99',lemEnding2:'assets/endings/lem/lem_ending_2.png?v=99',lemEnding3:'assets/endings/lem/lem_ending_3.png?v=99',lemEnding4:'assets/endings/lem/lem_ending_4.png?v=99',
  paulEnding1:'assets/endings/paul/paul_ending_1.png?v=105',paulEnding2:'assets/endings/paul/paul_ending_2.png?v=105',paulEnding3:'assets/endings/paul/paul_ending_3.png?v=105',paulEnding4:'assets/endings/paul/paul_ending_4.png?v=105',
+ paigeEnding1:'assets/endings/paige/paige_ending_1.png?v=107',paigeEnding2:'assets/endings/paige/paige_ending_2.png?v=107',paigeEnding3:'assets/endings/paige/paige_ending_3.png?v=107',paigeEnding4:'assets/endings/paige/paige_ending_4.png?v=107',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png?v=81',gary_walk:'assets/characters/gary/gary_walk.png?v=81',gary_punch:'assets/characters/gary/gary_punch.png?v=81',gary_kick:'assets/characters/gary/gary_kick.png?v=81',gary_block:'assets/characters/gary/gary_block.png?v=81',gary_crouch:'assets/characters/gary/gary_crouch.png?v=81',gary_special:'assets/characters/gary/gary_special.png?v=81',gary_jump:'assets/characters/gary/gary_jump.png?v=81',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png?v=73',emma_crouch:'assets/characters/emma/emma_crouch.png?v=73',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png?v=73',
@@ -182,6 +183,12 @@ const tournamentEndings={
     {asset:'paulEnding2',title:'BACK TO WEDDING DUTY.',text:'After the tournament, Paul returned to familiar ground, capturing another happy couple on their big day.'},
     {asset:'paulEnding3',title:'AN UNEXPECTED PHOTO.',text:'While out with his camera, Paul caught something impossible on film: a UFO landing in a field and two aliens stepping out.'},
     {asset:'paulEnding4',title:'THE ALIEN WEDDING.',text:'One invitation later, Paul found himself photographing an intergalactic wedding — the strangest booking of his career.'}
+  ],
+  paige:[
+    {asset:'paigeEnding1',title:'PAIGE WON THE TOURNAMENT.',text:'Paige battled through Beatz Brawl, lifted the trophy, and showed the world that the Crew Girls star could do it all.'},
+    {asset:'paigeEnding2',title:'BACK TO THE CLASSROOM.',text:'After the tournament, Paige returned to normal life as a primary school teacher, leading her English class with confidence and charm.'},
+    {asset:'paigeEnding3',title:'THE CHILDREN FOUND OUT.',text:'It did not take long for the class to discover that Miss Paige was also an epic dancer, with her videos popping up on phones, tablets, and computers.'},
+    {asset:'paigeEnding4',title:'ONE LAST PERFORMANCE.',text:'Soon the tables became a stage, the pom-poms came out, and Paige gave the class a Crew Girls performance they would never forget.'}
   ]
 };
 function activeTournamentEnding(){
@@ -1726,7 +1733,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V104...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V107...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
