@@ -114,6 +114,7 @@ const files={
  garyEnding1:'assets/endings/gary/gary_ending_1.png?v=108',garyEnding2:'assets/endings/gary/gary_ending_2.png?v=108',garyEnding3:'assets/endings/gary/gary_ending_3.png?v=108',garyEnding4:'assets/endings/gary/gary_ending_4.png?v=108',
  aimeeEnding1:'assets/endings/aimee/aimee_ending_1.png?v=109',aimeeEnding2:'assets/endings/aimee/aimee_ending_2.png?v=109',aimeeEnding3:'assets/endings/aimee/aimee_ending_3.png?v=109',aimeeEnding4:'assets/endings/aimee/aimee_ending_4.png?v=109',
  aimeeClassicEnding1:'assets/endings/aimee_classic/aimee_classic_ending_1.png?v=111',aimeeClassicEnding2:'assets/endings/aimee_classic/aimee_classic_ending_2.png?v=111',aimeeClassicEnding3:'assets/endings/aimee_classic/aimee_classic_ending_3.png?v=111',aimeeClassicEnding4:'assets/endings/aimee_classic/aimee_classic_ending_4.png?v=111',
+ wardyEnding1:'assets/endings/wardy/wardy_ending_1.png?v=112',wardyEnding2:'assets/endings/wardy/wardy_ending_2.png?v=112',wardyEnding3:'assets/endings/wardy/wardy_ending_3.png?v=112',wardyEnding4:'assets/endings/wardy/wardy_ending_4.png?v=112',
  beatz_stand:'assets/characters/beatz/beatz_stand.png',beatz_walk:'assets/characters/beatz/beatz_walk.png',beatz_punch:'assets/characters/beatz/beatz_punch.png',beatz_kick:'assets/characters/beatz/beatz_kick.png',beatz_block:'assets/characters/beatz/beatz_block.png',beatz_crouch:'assets/characters/beatz/beatz_crouch.png',beatz_special:'assets/characters/beatz/beatz_special.png',beatz_jump:'assets/characters/beatz/beatz_jump.png',
  gary_stand:'assets/characters/gary/gary_stand.png?v=81',gary_walk:'assets/characters/gary/gary_walk.png?v=81',gary_punch:'assets/characters/gary/gary_punch.png?v=81',gary_kick:'assets/characters/gary/gary_kick.png?v=81',gary_block:'assets/characters/gary/gary_block.png?v=81',gary_crouch:'assets/characters/gary/gary_crouch.png?v=81',gary_special:'assets/characters/gary/gary_special.png?v=81',gary_jump:'assets/characters/gary/gary_jump.png?v=81',
  emma_stand:'assets/characters/emma/emma_stand.png',emma_walk:'assets/characters/emma/emma_walk.png',emma_punch:'assets/characters/emma/emma_punch.png',emma_kick:'assets/characters/emma/emma_kick.png',emma_block:'assets/characters/emma/emma_block.png?v=73',emma_crouch:'assets/characters/emma/emma_crouch.png?v=73',emma_special:'assets/characters/emma/emma_special.png',emma_jump:'assets/characters/emma/emma_jump.png?v=73',
@@ -210,13 +211,19 @@ const tournamentEndings={
     {asset:'aimeeClassicEnding2',title:'THE PARTY KEPT GOING.',text:'Rather than head home, Aimee jumped straight into the crowd and danced with everyone celebrating her win.'},
     {asset:'aimeeClassicEnding3',title:'TIME FOR MATCHA.',text:'After all that fighting and dancing, Aimee made one very important stop: the café for a vanilla matcha latte.'},
     {asset:'aimeeClassicEnding4',title:'ONE WAS NEVER ENOUGH.',text:'Aimee settled in with five matchas on the table and another in her hand. Champion behaviour, apparently.'}
+  ],
+  wardy:[
+    {asset:'wardyEnding1',title:'WARDY WON THE TOURNAMENT.',text:'Wardy fought through Beatz Brawl, claimed the trophy, and walked away as the new tournament champion.'},
+    {asset:'wardyEnding2',title:'WHAT TO BUY FIRST?',text:'With £250,000 in winnings piled around her, Wardy had one serious problem: deciding what to spend it on.'},
+    {asset:'wardyEnding3',title:'ONE SHOP STOOD OUT.',text:'Then she spotted the perfect place — a spider-style mega store packed with exactly the kind of gear she could never resist.'},
+    {asset:'wardyEnding4',title:'MONEY WELL SPENT.',text:'By the end of the night, Wardy had turned her home into a spider-style paradise, complete with a new outfit and merchandise everywhere.'}
   ]
 };
 function activeTournamentEnding(){
   const ch=characters[selectedFighter];
   if(!ch)return null;
   if(ch.id==='aimee'){
-    // Aimee has outfit-specific tournament endings. This set belongs to the Pom Performance outfit; Classic will be added separately.
+    // Aimee has separate tournament endings for her Pom Performance and Classic outfits.
     return selectedAimeeOutfit==='poms'?(tournamentEndings.aimeePoms||null):(tournamentEndings.aimeeClassic||null);
   }
   return tournamentEndings[ch.id]||null;
@@ -1759,7 +1766,7 @@ function drawReturnButton(label){
   ctx.fillStyle='#fff';ctx.font='30px Impact';ctx.fillText(label,W/2,H/2+156);
   ctx.restore();
 }
-function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V111...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
+function loop(ts){pollEndingGamepad();if(!last)last=ts;const dt=Math.min(32,ts-last);last=ts;if(loaded<total){ctx.fillStyle='#02050b';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#31c8ff';ctx.font='30px Impact';ctx.fillText('LOADING BEATZ BRAWL V112...',W/2,H/2);requestAnimationFrame(loop);return;}document.getElementById('mobileControls').style.display=(gameState==='fight')?'block':'none';
 if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
 if(gameState==='mode'){drawModeScreen();requestAnimationFrame(loop);return;}
 if(gameState==='tournamentChoice'){drawTournamentChoice();requestAnimationFrame(loop);return;}
